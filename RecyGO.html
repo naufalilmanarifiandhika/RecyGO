@@ -1,0 +1,3376 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RecyGO — Smart Waste to Resource</title>
+    
+    <!-- Google Fonts: Plus Jakarta Sans & Outfit untuk tipografi logo dan UI modern -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+              brand: ['"Outfit"', '"Plus Jakarta Sans"', 'sans-serif'],
+            }
+          }
+        }
+      };
+    </script>
+    
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    
+    <!-- Babel (untuk kompilasi JSX di browser) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-slate-50 font-sans antialiased text-slate-900">
+    <!-- Kontainer utama aplikasi React -->
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useEffect, useRef, useState } = React;
+
+        /* ================================================================== */
+        /*  Sistem Ikon Vektor Mandiri (Anti-Fallback)                         */
+        /* ================================================================== */
+
+        function SvgWrap({ size = 24, className = "", strokeWidth = 2, children, ...props }) {
+          return (
+            <svg
+              width={size}
+              height={size}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={className}
+              aria-hidden="true"
+              {...props}
+            >
+              {children}
+            </svg>
+          );
+        }
+
+        const Icons = {
+          Home: (p) => <SvgWrap {...p}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></SvgWrap>,
+          MapIcon: (p) => <SvgWrap {...p}><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></SvgWrap>,
+          History: (p) => <SvgWrap {...p}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></SvgWrap>,
+          User: (p) => <SvgWrap {...p}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></SvgWrap>,
+          Truck: (p) => <SvgWrap {...p}><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></SvgWrap>,
+          ScanLine: (p) => <SvgWrap {...p}><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></SvgWrap>,
+          Gift: (p) => <SvgWrap {...p}><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></SvgWrap>,
+          BookOpen: (p) => <SvgWrap {...p}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></SvgWrap>,
+          Bell: (p) => <SvgWrap {...p}><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></SvgWrap>,
+          Leaf: (p) => <SvgWrap {...p}><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></SvgWrap>,
+          Trash2: (p) => <SvgWrap {...p}><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></SvgWrap>,
+          Wifi: (p) => <SvgWrap {...p}><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></SvgWrap>,
+          TrendingUp: (p) => <SvgWrap {...p}><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></SvgWrap>,
+          X: (p) => <SvgWrap {...p}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></SvgWrap>,
+          ChevronLeft: (p) => <SvgWrap {...p}><polyline points="15 18 9 12 15 6"/></SvgWrap>,
+          ChevronRight: (p) => <SvgWrap {...p}><polyline points="9 18 15 12 9 6"/></SvgWrap>,
+          Check: (p) => <SvgWrap {...p}><polyline points="20 6 9 17 4 12"/></SvgWrap>,
+          CheckCircle2: (p) => <SvgWrap {...p}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></SvgWrap>,
+          Coins: (p) => <SvgWrap {...p}><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/></SvgWrap>,
+          Minus: (p) => <SvgWrap {...p}><line x1="5" y1="12" x2="19" y2="12"/></SvgWrap>,
+          Plus: (p) => <SvgWrap {...p}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></SvgWrap>,
+          MapPin: (p) => <SvgWrap {...p}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></SvgWrap>,
+          Recycle: (p) => <SvgWrap {...p}><path d="M7 19H4.815a1.83 1.83 0 0 1-1.57-.881 1.785 1.785 0 0 1-.004-1.784L7.196 9.5"/><path d="M11 19h8.203a1.83 1.83 0 0 0 1.556-.89 1.784 1.784 0 0 0 0-1.775l-1.226-2.12"/><path d="m14 16-3 3 3 3"/><path d="M8.293 13.596 7.196 9.5 3.1 10.598"/><path d="m9.344 5.811 1.093-1.892A1.83 1.83 0 0 1 11.985 3a1.784 1.784 0 0 1 1.546.888l3.943 6.843"/><path d="m13.378 9.633 4.096 1.098 1.097-4.096"/></SvgWrap>,
+          Copy: (p) => <SvgWrap {...p}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></SvgWrap>,
+          ArrowUpRight: (p) => <SvgWrap {...p}><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></SvgWrap>,
+          Award: (p) => <SvgWrap {...p}><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></SvgWrap>,
+          Pencil: (p) => <SvgWrap {...p}><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></SvgWrap>,
+          TreePine: (p) => <SvgWrap {...p}><path d="m17 14 3 3.3a1 1 0 0 1-.7 1.7H4.7a1 1 0 0 1-.7-1.7L7 14h-.3a1 1 0 0 1-.7-1.7L9 9h-.2A1 1 0 0 1 8 7.3L12 3l4 4.3a1 1 0 0 1-.8 1.7H15l3 3.3a1 1 0 0 1-.7 1.7H17Z"/><path d="M12 22v-3"/></SvgWrap>,
+          Ticket: (p) => <SvgWrap {...p}><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></SvgWrap>,
+          ShoppingBag: (p) => <SvgWrap {...p}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></SvgWrap>,
+          Smartphone: (p) => <SvgWrap {...p}><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></SvgWrap>,
+          Zap: (p) => <SvgWrap {...p}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></SvgWrap>,
+          Sprout: (p) => <SvgWrap {...p}><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></SvgWrap>,
+          Droplets: (p) => <SvgWrap {...p}><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"/><path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97"/></SvgWrap>,
+          BadgeCheck: (p) => <SvgWrap {...p}><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></SvgWrap>,
+          Lock: (p) => <SvgWrap {...p}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></SvgWrap>,
+          AlertTriangle: (p) => <SvgWrap {...p}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></SvgWrap>,
+          RotateCcw: (p) => <SvgWrap {...p}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></SvgWrap>,
+          Wind: (p) => <SvgWrap {...p}><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></SvgWrap>,
+          Trophy: (p) => <SvgWrap {...p}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></SvgWrap>,
+          Info: (p) => <SvgWrap {...p}><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></SvgWrap>,
+          Store: (p) => <SvgWrap {...p}><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12v0a2 2 0 0 1-2-2V7"/></SvgWrap>,
+          Cpu: (p) => <SvgWrap {...p}><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></SvgWrap>,
+        };
+
+        const {
+            Home, MapIcon, History, User, Truck, ScanLine, Gift, BookOpen, Bell, Leaf,
+            Trash2, Wifi, TrendingUp, X, ChevronLeft, ChevronRight, Check, CheckCircle2,
+            Coins, Minus, Plus, MapPin, Recycle, Copy, ArrowUpRight, Award, Pencil, TreePine,
+            Ticket, ShoppingBag, Smartphone, Zap, Sprout, Droplets, BadgeCheck, Lock,
+            AlertTriangle, RotateCcw, Wind, Trophy, Info, Store, Cpu
+        } = Icons;
+
+        /* ================================================================== */
+        /*  Logo Utama RecyGO (Diperbagus + Tipografi Modern Tanpa 5.0)       */
+        /* ================================================================== */
+
+        function RecyGoBrandMark({ size = 44, showWordmark = true }) {
+          return (
+            <div className="inline-flex items-center gap-3">
+              <span
+                style={{
+                  width: size,
+                  height: size,
+                  boxShadow: "0 8px 20px -4px rgba(5, 150, 105, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.35)",
+                }}
+                className="relative flex shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 via-emerald-600 to-teal-700 text-white"
+              >
+                <svg width={Math.round(size * 0.66)} height={Math.round(size * 0.66)} viewBox="0 0 48 48" fill="none" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="rgLoopTop" x1="6" y1="6" x2="40" y2="26" gradientUnits="userSpaceOnUse">
+                      <stop offset="0%" stopColor="#ffffff" />
+                      <stop offset="100%" stopColor="#d1fae5" />
+                    </linearGradient>
+                    <linearGradient id="rgLoopBot" x1="10" y1="24" x2="42" y2="42" gradientUnits="userSpaceOnUse">
+                      <stop offset="0%" stopColor="#a7f3d0" />
+                      <stop offset="100%" stopColor="#34d399" />
+                    </linearGradient>
+                  </defs>
+                  {/* Busur atas sirkular + panah dinamika GO */}
+                  <path
+                    d="M9.5 26C8.5 16.8 15.6 9 25 9h8.5"
+                    stroke="url(#rgLoopTop)"
+                    strokeWidth="4.5"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M29 4.5L35.5 9L29 13.5"
+                    stroke="#ffffff"
+                    strokeWidth="4.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  {/* Busur bawah sirkular */}
+                  <path
+                    d="M38.5 22C39.5 31.2 32.4 39 23 39h-8.5"
+                    stroke="url(#rgLoopBot)"
+                    strokeWidth="4.5"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M19 43.5L12.5 39L19 34.5"
+                    stroke="#a7f3d0"
+                    strokeWidth="4.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  {/* Siluet Daun Geometris Modern di Inti */}
+                  <path
+                    d="M30.5 17.5C22.5 17.5 17.5 22 17.5 28c0 2.8 2 4.8 4.8 4.8 6.2 0 8.2-6 8.2-15.3Z"
+                    fill="#ffffff"
+                  />
+                  <path
+                    d="M17.5 31.5C21 27.2 24 24.5 28 21"
+                    stroke="#047857"
+                    strokeWidth="2.6"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>
+              {showWordmark && (
+                <div className="min-w-0">
+                  <p className="font-brand text-xl font-extrabold leading-none tracking-tight text-slate-900">
+                    Recy<span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">GO</span>
+                  </p>
+                  <p className="mt-1 text-[11px] font-medium leading-tight tracking-normal text-slate-500">
+                    Smart Waste to Resource
+                  </p>
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        /* ---------------- Logo Khusus untuk 7 Fitur RecyGO ---------------- */
+
+        function FeatureIcon({ id, size = 24 }) {
+          switch (id) {
+            case "recylearn":
+              return (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 5c4-1 7-.5 10 1.5 3-2 6-2.5 10-1.5v13c-4-1-7-.5-10 1.5-3-2-6-2.5-10-1.5V5Z" />
+                  <path d="M12 6.5v13" />
+                  <circle cx="18" cy="4" r="2" fill="currentColor" />
+                </svg>
+              );
+            case "recypoin":
+              return (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="9" />
+                  <circle cx="12" cy="12" r="6" strokeDasharray="2 2" />
+                  <path d="M12 8v8M9.5 10.5h3.5a1.5 1.5 0 0 1 0 3h-2a1.5 1.5 0 0 0 0 3H14.5" />
+                </svg>
+              );
+            case "recypick":
+              return (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="7" width="12" height="9" rx="1.5" />
+                  <path d="M14 10h4l3 3v3h-7v-6Z" />
+                  <circle cx="6.5" cy="17.5" r="2" />
+                  <circle cx="17.5" cy="17.5" r="2" />
+                  <path d="M6 11.5l2-2 2 2M8 9.5v4" />
+                </svg>
+              );
+            case "recysense":
+              return (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M7 10h10l-1 10a1.5 1.5 0 0 1-1.5 1.3h-5A1.5 1.5 0 0 1 8 20L7 10Z" />
+                  <path d="M5 8h14" />
+                  <path d="M9 5a5 5 0 0 1 6 0" />
+                  <path d="M7 2.8a8.5 8.5 0 0 1 10 0" />
+                </svg>
+              );
+            case "recymart":
+              return (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 9l2-5h14l2 5" />
+                  <path d="M3 9c0 1.5 1.2 2.5 2.5 2.5S8 10.5 8 9c0 1.5 1.2 2.5 2.5 2.5S13 10.5 13 9c0 1.5 1.2 2.5 2.5 2.5S18 10.5 18 9c0 1.5 1.2 2.5 3 2.5" />
+                  <path d="M5 11.5V19a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 19v-7.5" />
+                  <circle cx="12" cy="15.5" r="2" />
+                </svg>
+              );
+            case "recytrack":
+              return (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 3L6 11h4l-2.5 6h9L14 11h4L12 3Z" />
+                  <path d="M12 17v4" />
+                  <circle cx="18.5" cy="6.5" r="2.5" />
+                </svg>
+              );
+            case "recyhub":
+              return (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="9" cy="8" r="3" />
+                  <circle cx="16.5" cy="9" r="2.5" />
+                  <path d="M3.5 19c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5" />
+                  <path d="M14 19c.3-2.5 2.2-4.5 4.8-4.5 2.5 0 4.7 2 4.7 4.5" />
+                </svg>
+              );
+            default:
+              return <ScanLine size={size} />;
+          }
+        }
+
+        /* --------- Gambar Visual Setiap Produk di RecyMart (SVG) ---------- */
+
+        function MartProductImage({ type }) {
+          switch (type) {
+            case "pelet":
+              return (
+                <svg viewBox="0 0 320 160" className="h-full w-full">
+                  <defs>
+                    <linearGradient id="mPelet" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#10b981" />
+                      <stop offset="100%" stopColor="#0f766e" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="320" height="160" fill="url(#mPelet)" />
+                  <circle cx="270" cy="25" r="55" fill="#6ee7b7" opacity="0.2" />
+                  <rect x="65" y="32" width="84" height="96" rx="12" fill="#ffffff" opacity="0.95" />
+                  <path d="M80 52h54M85 66h44" stroke="#059669" strokeWidth="3.5" strokeLinecap="round" />
+                  <text x="107" y="96" textAnchor="middle" fontSize="13" fontWeight="700" fill="#065f46">PET / HDPE</text>
+                  <text x="107" y="112" textAnchor="middle" fontSize="9.5" fontWeight="600" fill="#64748b">BIJI PLASTIK</text>
+                  <ellipse cx="212" cy="112" rx="50" ry="22" fill="#047857" />
+                  {[[188, 106], [204, 100], [220, 104], [234, 111], [198, 115], [215, 117], [226, 103], [178, 113]].map(([cx, cy], i) => (
+                    <circle key={i} cx={cx} cy={cy} r="6" fill="#d1fae5" stroke="#059669" strokeWidth="1.8" />
+                  ))}
+                </svg>
+              );
+            case "maggot":
+              return (
+                <svg viewBox="0 0 320 160" className="h-full w-full">
+                  <defs>
+                    <linearGradient id="mMaggot" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#f59e0b" />
+                      <stop offset="100%" stopColor="#b45309" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="320" height="160" fill="url(#mMaggot)" />
+                  <circle cx="50" cy="30" r="50" fill="#fde68a" opacity="0.2" />
+                  <rect x="60" y="36" width="102" height="88" rx="14" fill="#fffbeb" />
+                  <circle cx="111" cy="70" r="19" fill="#d97706" />
+                  <text x="111" y="74" textAnchor="middle" fontSize="11" fontWeight="700" fill="#ffffff">BSF 42%</text>
+                  <text x="111" y="108" textAnchor="middle" fontSize="10" fontWeight="700" fill="#78350f">PAKAN TERNAK</text>
+                  <ellipse cx="222" cy="106" rx="46" ry="24" fill="#78350f" stroke="#fde68a" strokeWidth="2" />
+                  {[[202, 100], [220, 96], [234, 104], [208, 110], [226, 112]].map(([x, y], i) => (
+                    <rect key={i} x={x} y={y} width="17" height="6.5" rx="3" fill="#fde68a" />
+                  ))}
+                </svg>
+              );
+            case "kompos":
+              return (
+                <svg viewBox="0 0 320 160" className="h-full w-full">
+                  <defs>
+                    <linearGradient id="mKompos" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#059669" />
+                      <stop offset="100%" stopColor="#064e3b" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="320" height="160" fill="url(#mKompos)" />
+                  <rect x="65" y="32" width="90" height="96" rx="12" fill="#ecfdf5" />
+                  <path d="M115 54c-10 0-17 7-17 16 0 5 3.5 8.5 8.5 8.5 10 0 15-9 15-24.5h-6.5Z" fill="#10b981" />
+                  <text x="110" y="100" textAnchor="middle" fontSize="11" fontWeight="700" fill="#065f46">KOMPOS</text>
+                  <text x="110" y="114" textAnchor="middle" fontSize="9.5" fontWeight="600" fill="#047857">GRANUL MURNI</text>
+                  <path d="M172 128c12-22 30-32 48-32s36 10 48 32H172Z" fill="#064e3b" stroke="#6ee7b7" strokeWidth="2" />
+                  <path d="M220 96V70" stroke="#a7f3d0" strokeWidth="3.5" strokeLinecap="round" />
+                  <path d="M220 78c-10-8-20-3-17 7 3 6 12 5 17-7ZM220 73c10-8 20-3 17 7-3 6-12 5-17-7Z" fill="#6ee7b7" />
+                </svg>
+              );
+            case "kardus":
+              return (
+                <svg viewBox="0 0 320 160" className="h-full w-full">
+                  <defs>
+                    <linearGradient id="mKardus" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#d97706" />
+                      <stop offset="100%" stopColor="#92400e" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="320" height="160" fill="url(#mKardus)" />
+                  <rect x="75" y="34" width="170" height="92" rx="10" fill="#fcd34d" stroke="#fef3c7" strokeWidth="2.5" />
+                  <line x1="75" y1="64" x2="245" y2="64" stroke="#92400e" strokeWidth="2.5" />
+                  <line x1="75" y1="95" x2="245" y2="95" stroke="#92400e" strokeWidth="2.5" />
+                  <line x1="120" y1="34" x2="120" y2="126" stroke="#fef3c7" strokeWidth="2.5" strokeDasharray="5 4" />
+                  <line x1="200" y1="34" x2="200" y2="126" stroke="#fef3c7" strokeWidth="2.5" strokeDasharray="5 4" />
+                  <rect x="128" y="68" width="64" height="24" rx="5" fill="#78350f" />
+                  <text x="160" y="84" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="#fef3c7">OCC GRADE A</text>
+                </svg>
+              );
+            case "ewaste":
+              return (
+                <svg viewBox="0 0 320 160" className="h-full w-full">
+                  <defs>
+                    <linearGradient id="mEwaste" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#0d9488" />
+                      <stop offset="100%" stopColor="#115e59" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="320" height="160" fill="url(#mEwaste)" />
+                  <rect x="70" y="32" width="180" height="96" rx="12" fill="#047857" stroke="#99f6e4" strokeWidth="2.5" />
+                  <rect x="132" y="56" width="56" height="48" rx="6" fill="#0f172a" stroke="#fde047" strokeWidth="2" />
+                  <path d="M90 52h25l15 14M90 80h40M90 108h25l15-14M230 52h-25l-15 14M230 80h-40M230 108h-25l-15-14" stroke="#fde047" strokeWidth="2.2" strokeLinecap="round" />
+                  <text x="160" y="84" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="#fde047">PCB E-WASTE</text>
+                </svg>
+              );
+            case "flakes":
+            default:
+              return (
+                <svg viewBox="0 0 320 160" className="h-full w-full">
+                  <defs>
+                    <linearGradient id="mFlakes" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#14b8a6" />
+                      <stop offset="100%" stopColor="#0f766e" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="320" height="160" fill="url(#mFlakes)" />
+                  <rect x="82" y="38" width="50" height="90" rx="12" fill="#ccfbf1" stroke="#ffffff" strokeWidth="2.5" />
+                  <rect x="96" y="26" width="22" height="12" rx="3" fill="#fde047" />
+                  <path d="M150 84h24" stroke="#99f6e4" strokeWidth="3.5" strokeLinecap="round" />
+                  <circle cx="228" cy="84" r="36" fill="#ffffff" fillOpacity="0.18" stroke="#99f6e4" strokeWidth="2" />
+                  {["215,70 227,66 223,80", "235,74 248,80 238,90", "210,88 224,92 216,102", "230,94 244,98 234,108"].map((pts, i) => (
+                    <polygon key={i} points={pts} fill="#ffffff" />
+                  ))}
+                </svg>
+              );
+          }
+        }
+
+        /* ---------------------------- Konstanta ---------------------------- */
+
+        const SHADOW = {
+          card: "0 6px 24px rgba(15, 23, 42, 0.05)",
+          float: "0 10px 32px rgba(15, 23, 42, 0.12)",
+          sheet: "0 -12px 48px rgba(15, 23, 42, 0.18)",
+        };
+
+        const TODAY_IDX = (new Date().getDay() + 6) % 7;
+        const POINT_VALUE = 10;
+
+        const WASTE = {
+          organik: { label: "Organik", rate: 10, bin: "organik" },
+          plastik: { label: "Plastik", rate: 30, bin: "anorganik" },
+          kertas: { label: "Kertas", rate: 20, bin: "anorganik" },
+          ewaste: { label: "E-Waste", rate: 55, bin: "ewaste" },
+          logam: { label: "Logam", rate: 45, bin: "anorganik" },
+        };
+        const PICKUP_TYPES = ["organik", "plastik", "kertas", "ewaste"];
+        const BIN_LABEL = { organik: "Organik", anorganik: "Plastik & Kertas", ewaste: "E-Waste" };
+
+        const SITES_SEED = [
+          { id: "mawar", name: "TPS Komunitas Mawar", area: "RW 05", dist: "350 m", x: 330, y: 205, bins: { organik: 85, anorganik: 52, ewaste: 28 } },
+          { id: "melati", name: "TPS Melati Asri", area: "RW 02", dist: "900 m", x: 120, y: 120, bins: { organik: 41, anorganik: 66, ewaste: 35 } },
+          { id: "kenanga", name: "Bank Sampah Kenanga", area: "Pasar Lama", dist: "1,4 km", x: 500, y: 130, bins: { organik: 92, anorganik: 88, ewaste: 70 } },
+          { id: "anggrek", name: "TPS RSUD & Anggrek", area: "Jl. Kesehatan", dist: "2,1 km", x: 470, y: 335, bins: { organik: 22, anorganik: 81, ewaste: 48 } },
+        ];
+
+        const HISTORY_SEED = [
+          { id: 1, type: "setor", title: "Setor Plastik 2,5 kg", sub: "TPS Komunitas Mawar", time: "Hari ini, 08.12", points: 75, status: null },
+          { id: 2, type: "edu", title: "Selesai modul Panduan AI: Pemilahan E-Waste", sub: "RecyLearn", time: "Kemarin, 19.40", points: 20, status: null },
+          { id: 3, type: "tukar", title: "Tukar Pulsa Rp 10.000", sub: "Kode RGO-7K2M-Q9XA", time: "Kemarin, 10.05", points: -1000, status: null },
+          { id: 4, type: "jemput", title: "RecyPick Berkala: Plastik & Kertas 4 kg", sub: "Rumah fiandhikaaa, Jl. Mawar No. 12", time: "11 Okt, 10.30", points: 120, status: "Selesai" },
+          { id: 5, type: "setor", title: "Setor Kertas 6 kg", sub: "TPS Melati Asri", time: "9 Okt, 16.20", points: 120, status: null },
+        ];
+
+        const NOTIF_SEED = [
+          { id: 11, kind: "alert", title: "RecySense: TPS Komunitas Mawar mencapai 85%", body: "Kapasitas melewati ambang 80%. Notifikasi penjemputan telah dikirim ke armada.", time: "10 menit lalu", read: false, go: "pickup" },
+          { id: 12, kind: "ok", title: "RecyTrack: 15 Pohon Diselamatkan", body: "Bulan ini, Anda telah menyelamatkan 15 pohon dan mengurangi 5 kg emisi karbon.", time: "1 jam lalu", read: false, go: "recytrack" },
+          { id: 13, kind: "info", title: "Insentif sembako & token listrik tersedia", body: "Tukar RecyPoin kamu dengan token listrik, pulsa, atau potongan harga sembako.", time: "2 hari lalu", read: true, go: "recypoin" },
+        ];
+
+        const SERVICES = [
+          { id: "recylearn", label: "RecyLearn", hint: "Panduan visual & AI", tile: "bg-lime-50 text-lime-700" },
+          { id: "recypoin", label: "RecyPoin", hint: "Dompet poin & insentif", tile: "bg-amber-50 text-amber-600" },
+          { id: "recypick", label: "RecyPick", hint: "Panggil & jadwal armada", tile: "bg-teal-50 text-teal-600" },
+          { id: "recysense", label: "RecySense", hint: "Dasbor sensor IoT 80%", tile: "bg-emerald-50 text-emerald-600" },
+          { id: "recymart", label: "RecyMart", hint: "Marketplace B2B industri", tile: "bg-teal-50 text-teal-700" },
+          { id: "recytrack", label: "RecyTrack", hint: "Kalkulator jejak karbon", tile: "bg-emerald-50 text-emerald-700" },
+          { id: "recyhub", label: "RecyHub", hint: "Komunitas & Green Jobs", tile: "bg-amber-50 text-amber-700" },
+          { id: "scan", label: "Scan QR Setor", hint: "Setor di TPS terdekat", tile: "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white", primary: true },
+        ];
+
+        const MOBILE_NAV = [
+          { id: "home", label: "Beranda", short: "Beranda", Icon: Home },
+          { id: "recysense", label: "RecySense", short: "RecySense", Icon: MapIcon },
+          { id: "recymart", label: "RecyMart", short: "RecyMart", Icon: Store },
+          { id: "history", label: "Riwayat", short: "Riwayat", Icon: History },
+          { id: "profile", label: "Profil", short: "Profil", Icon: User },
+        ];
+
+        const PAGE_META = {
+          recysense: { title: "RecySense", sub: "Dasbor pintar sensor IoT TPS dengan notifikasi otomatis saat kapasitas mencapai 80%" },
+          history: { title: "Riwayat", sub: "Catatan setoran, penjemputan RecyPick, dan penukaran RecyPoin" },
+          profile: { title: "Profil Diri", sub: "Atur akun fiandhikaaa dan lihat pencapaian sirkularmu" },
+          recypoin: { title: "RecyPoin", sub: "Dompet poin gamifikasi: tukar poin dengan token listrik, pulsa, atau potongan sembako" },
+          recylearn: { title: "RecyLearn", sub: "Edukasi interaktif dan panduan visual berbasis AI untuk warga dan lansia" },
+          recymart: { title: "RecyMart", sub: "Marketplace B2B penghubung Bank Sampah desa dengan industri daur ulang dan peternak" },
+          recytrack: { title: "RecyTrack", sub: "Kalkulator jejak karbon personal dan apresiasi kontribusi lingkungan" },
+          recyhub: { title: "RecyHub", sub: "Ruang komunitas penggerak lokal: kampanye bersih desa, crowdfunding TPS, dan Green Jobs" },
+        };
+
+        const REWARDS = [
+          { id: "token20", title: "Token Listrik Rp 20.000", desc: "Kode token 20 digit langsung aktif untuk meteran listrik prabayar rumah tangga.", cost: 2000, cat: "voucher", Icon: Zap },
+          { id: "pulsa10", title: "Pulsa Rp 10.000", desc: "Semua operator seluler. Kode voucher langsung tersedia setelah penukaran RecyPoin.", cost: 1000, cat: "voucher", Icon: Smartphone },
+          { id: "sembako_beras", title: "Potongan Sembako Beras 5 kg", desc: "Voucher potongan harga Rp 25.000 untuk pembelian beras di warung atau koperasi desa.", cost: 2200, cat: "sembako", Icon: ShoppingBag },
+          { id: "sembako_minyak", title: "Potongan Minyak Goreng 2 Liter", desc: "Voucher potongan harga sembako kebutuhan harian di mitra BUMDes RecyGO.", cost: 1600, cat: "sembako", Icon: Droplets },
+          { id: "token50", title: "Token Listrik Rp 50.000", desc: "Masukkan kode ke meteran prabayar. Berlaku untuk semua golongan daya rumah.", cost: 4800, cat: "voucher", Icon: Zap },
+          { id: "pohon", title: "Donasi 1 Pohon Desa", desc: "Ditanam bersama relawan pemuda RecyHub untuk penghijauan kawasan TPS desa.", cost: 400, cat: "donasi", Icon: TreePine },
+        ];
+        const CAT_LABEL = { voucher: "Token & Pulsa", sembako: "Sembako", donasi: "Donasi" };
+        const CAT_GRAD = {
+          voucher: "bg-gradient-to-br from-emerald-400 to-teal-500",
+          sembako: "bg-gradient-to-br from-lime-400 to-emerald-500",
+          donasi: "bg-gradient-to-br from-teal-400 to-emerald-600",
+        };
+
+        const B2B_PRODUCTS = [
+          {
+            id: "pelet_pet",
+            title: "Biji Plastik PET & HDPE Daur Ulang",
+            cat: "plastik",
+            catLabel: "Plastik Industri",
+            seller: "Bank Sampah Pemuda Kenanga",
+            buyer: "Pabrik Daur Ulang Biji Plastik",
+            price: 11500,
+            minKg: 100,
+            stockKg: 1450,
+            imageType: "pelet",
+            desc: "Biji plastik daur ulang kemurnian tinggi yang telah dicuci bersih, siap untuk pencetakan industri.",
+          },
+          {
+            id: "maggot_bsf",
+            title: "Maggot BSF Segar & Kering (Pakan Ternak)",
+            cat: "organik",
+            catLabel: "Pakan & Kompos",
+            seller: "Komunitas Pemuda Biokonversi RW 05",
+            buyer: "Peternak Unggas & Ikan Air Tawar",
+            price: 8500,
+            minKg: 25,
+            stockKg: 620,
+            imageType: "maggot",
+            desc: "Sumber protein tinggi 42% untuk pakan ternak dan ikan hasil olahan sampah organik warga.",
+          },
+          {
+            id: "pupuk_kompos",
+            title: "Pupuk Kompos Organik Fermentasi",
+            cat: "organik",
+            catLabel: "Pakan & Kompos",
+            seller: "Bank Sampah Mawar Asri",
+            buyer: "Kelompok Tani & Perkebunan",
+            price: 3200,
+            minKg: 200,
+            stockKg: 3100,
+            imageType: "kompos",
+            desc: "Kompos matang bertekstur remah, bebas bau, kaya unsur hara untuk menyuburkan lahan pertanian.",
+          },
+          {
+            id: "kardus_occ",
+            title: "Bal Kertas & Kardus Press (OCC Grade A)",
+            cat: "kertas",
+            catLabel: "Kertas Industri",
+            seller: "Sentra Pengepul Pemuda Desa",
+            buyer: "Pabrik Kertas Daur Ulang",
+            price: 4100,
+            minKg: 300,
+            stockKg: 2400,
+            imageType: "kardus",
+            desc: "Kardus bekas terpilah kering dengan kadar air rendah yang sudah dipadatkan menggunakan mesin pres.",
+          },
+          {
+            id: "ewaste_pcb",
+            title: "Komponen Limbah Elektronik (E-Waste)",
+            cat: "ewaste",
+            catLabel: "E-Waste Terpilah",
+            seller: "Unit E-Waste RecyGO",
+            buyer: "Industri Smelter & Pemurnian Logam",
+            price: 45000,
+            minKg: 20,
+            stockKg: 180,
+            imageType: "ewaste",
+            desc: "Papan sirkuit elektronik dan perangkat rusak yang telah dipisahkan secara aman dari baterai berbahaya.",
+          },
+          {
+            id: "flakes_pet",
+            title: "Cacahan Botol PET Bening (Hot-Washed)",
+            cat: "plastik",
+            catLabel: "Plastik Industri",
+            seller: "Koperasi Sirkular Mandiri",
+            buyer: "Industri Serat Poliester & Kemasan",
+            price: 9800,
+            minKg: 150,
+            stockKg: 950,
+            imageType: "flakes",
+            desc: "Cacahan botol plastik bening bebas label dan perekat, siap diolah menjadi serat tekstil ramah lingkungan.",
+          },
+        ];
+
+        const EDU_MODULES = [
+          {
+            id: "dasar", title: "Panduan Visual: Memilah Organik, Plastik & Kertas", dur: "4 menit", pts: 15, Icon: Recycle,
+            desc: "Panduan kontras tinggi yang mudah diikuti warga dan lansia di rumah.",
+            intro: "RecyLearn menggunakan panduan visual sederhana agar seluruh anggota keluarga, termasuk lansia, dapat memilah sampah tanpa bingung.",
+            steps: [
+              "Wadah Hijau (Organik): Masukkan sisa sayur, nasi, kulit buah, dan daun kering untuk diolah menjadi kompos atau pakan maggot.",
+              "Wadah Kuning (Plastik): Masukkan botol minum, gelas plastik, dan kemasan sampo yang sudah dibilas air.",
+              "Wadah Biru (Kertas): Lipat kardus bekas, koran, dan kertas tulis dalam keadaan kering serta bebas minyak.",
+              "Setorkan melalui RecyPick atau TPS terdekat untuk mendapatkan RecyPoin.",
+            ],
+            tip: "Tempelkan stiker warna dari RecyLearn pada masing-masing ember di dapur agar orang tua di rumah langsung mengenali wadahnya.",
+          },
+          {
+            id: "ewaste", title: "Mengenali & Mengamankan Limbah Elektronik (E-Waste)", dur: "5 menit", pts: 25, Icon: Cpu,
+            desc: "Cara aman menangani baterai bekas, lampu mati, kabel, dan gawai rusak.",
+            intro: "Limbah elektronik (e-waste) mengandung logam berat yang berbahaya jika tercampur dengan sampah dapur atau dibakar.",
+            steps: [
+              "Kumpulkan baterai jam/remot bekas, charger rusak, lampu bohlam mati, dan ponsel tua.",
+              "Simpan di dalam kotak plastik kering bertutup rapat dan jauhkan dari jangkauan anak-anak.",
+              "Jangan pernah membongkar baterai atau membuangnya ke saluran air.",
+              "Gunakan fitur RecyPick kategori E-Waste agar dijemput khusus oleh armada RecyGO.",
+            ],
+            tip: "Setiap 1 kg limbah elektronik terpilah bernilai 55 RecyPoin dan disalurkan secara resmi melalui RecyMart.",
+          },
+          {
+            id: "kompos", title: "Mengolah Organik Menjadi Kompos & Pakan Maggot", dur: "6 menit", pts: 20, Icon: Sprout,
+            desc: "Ubah sisa dapur menjadi pupuk subur dan komoditas bernilai di RecyMart.",
+            intro: "Sampah organik menyumbang porsi terbesar timbunan TPA, namun paling mudah diubah menjadi sumber daya ekonomi desa.",
+            steps: [
+              "Cacah sisa sayuran dan kulit buah agar lebih cepat terurai.",
+              "Untuk kompos: susun berlapis dengan daun kering di dalam ember komposter dan aduk seminggu sekali.",
+              "Untuk budidaya Maggot BSF: berikan sampah organik segar pada biopond larva Black Soldier Fly.",
+              "Hasil panen kompos dan maggot dapat dijual langsung ke peternak melalui fitur RecyMart.",
+            ],
+            tip: "Hindari mencampur plastik atau kaca ke dalam wadah organik agar kualitas kompos dan maggot tetap terjaga.",
+          },
+          {
+            id: "iot80", title: "Cara Kerja Sensor IoT RecySense & Ambang 80%", dur: "3 menit", pts: 15, Icon: Wifi,
+            desc: "Memahami bagaimana sensor pintar menghemat bahan bakar armada.",
+            intro: "RecySense memasang sensor ultrasonik pada penutup tempat sampah komunal untuk mengukur ketinggian volume sampah secara otomatis.",
+            steps: [
+              "Sensor membaca persentase kepenuhan wadah organik, anorganik, dan e-waste setiap saat.",
+              "Selama kapasitas masih di bawah 80%, status TPS berwarna hijau (Aman) dan truk tidak perlu datang.",
+              "Begitu kapasitas mencapai 80%, sistem mengirimkan notifikasi otomatis kepada petugas RecyPick.",
+              "Rute armada disusun hanya melewati TPS yang sudah mencapai 80% sehingga hemat bahan bakar dan rendah emisi.",
+            ],
+            tip: "Warga dapat memantau peta RecySense sebelum berangkat menyetor sampah ke TPS komunitas.",
+          },
+        ];
+
+        const HUB_CAMPAIGNS = [
+          { id: "c1", title: "Kampanye Bersih Sungai & Edukasi Lansia RW 05", date: "Minggu, 25 Okt 2026", area: "Bantaran Sungai Desa", joined: 42, target: 60, pts: 30 },
+          { id: "c2", title: "Pelatihan Pemuda: Perakitan Sensor IoT TPS Desa", date: "Sabtu, 31 Okt 2026", area: "Balai Pemuda Sukamaju", joined: 28, target: 35, pts: 40 },
+        ];
+
+        const HUB_CROWDFUND = [
+          { id: "cf1", title: "Perbaikan Atap & Instalasi Sensor IoT TPS Mawar", raised: 14500000, goal: 18000000, donors: 128, desc: "Pengadaan modul sensor ultrasonik RecySense dan perbaikan fasilitas pemilahan TPS desa." },
+          { id: "cf2", title: "Rumah Biokonversi Maggot BSF Komunitas Pemuda", raised: 6400000, goal: 8000000, donors: 76, desc: "Pembangunan rak biopond pengolahan 500 kg sampah organik per hari untuk pasokan RecyMart." },
+        ];
+
+        const HUB_JOBS = [
+          { id: "j1", title: "Teknisi Lapangan Sensor IoT RecySense", company: "RecyGO Indonesia", type: "Paruh Waktu", loc: "Surabaya & Sekitarnya", pay: "Rp 3,2 Juta / bulan" },
+          { id: "j2", title: "Koordinator Rantai Pasok B2B RecyMart", company: "BUMDes Sirkular Mawar", type: "Penuh Waktu", loc: "Desa Sukamaju", pay: "Rp 3,8 Juta / bulan" },
+          { id: "j3", title: "Fasilitator Edukasi Warga & Lansia (RecyLearn)", company: "Komunitas Pemuda Sirkular", type: "Relawan Berinsentif", loc: "Komunitas Lokal", pay: "Insentif & Sertifikat" },
+        ];
+
+        const LEVELS = [
+          { name: "Pemula Hijau", min: 0 },
+          { name: "Pejuang Daur Ulang", min: 1000 },
+          { name: "Inovator Sirkular", min: 3000 },
+          { name: "Penjaga Bumi", min: 6000 },
+        ];
+
+        const BADGES = [
+          { id: "first", name: "Setoran pertama", hint: "Setor sampah satu kali", Icon: Recycle, test: (s) => s.kg > 0 },
+          { id: "kg10", name: "Klub 10 kg", hint: "Total setoran 10 kg", Icon: Award, test: (s) => s.kg >= 10 },
+          { id: "kg100", name: "Klub 100 kg", hint: "Total setoran 100 kg", Icon: Trophy, test: (s) => s.kg >= 100 },
+          { id: "trader", name: "Penukar pertama", hint: "Tukar satu insentif RecyPoin", Icon: Gift, test: (s) => s.rewards.length >= 1 },
+          { id: "planter", name: "Penyelamat 15 Pohon", hint: "Capai metrik 15 pohon RecyTrack", Icon: TreePine, test: (s) => s.trees >= 15 },
+          { id: "learner", name: "Pelajar RecyLearn", hint: "Selesaikan 3 modul edukasi", Icon: BookOpen, test: (s) => s.edu >= 3 },
+        ];
+
+        const SLOTS = ["08.00 - 10.00", "10.00 - 12.00", "13.00 - 15.00", "15.00 - 17.00"];
+
+        /* ----------------------------- Helper ------------------------------ */
+
+        let _uid = 100;
+        const uid = () => ++_uid;
+        const fmt = (n) => Math.round(n).toLocaleString("id-ID");
+        const fmtKg = (n) => n.toLocaleString("id-ID", { maximumFractionDigits: 1 });
+        const worst = (site) => Math.max(...Object.values(site.bins));
+        const rand4 = () => Math.random().toString(36).slice(2, 6).toUpperCase().padEnd(4, "X");
+
+        function nowLabel() {
+          const d = new Date();
+          return `Hari ini, ${String(d.getHours()).padStart(2, "0")}.${String(d.getMinutes()).padStart(2, "0")}`;
+        }
+
+        function getGreeting() {
+          const h = new Date().getHours();
+          if (h < 11) return "Selamat pagi";
+          if (h < 15) return "Selamat siang";
+          if (h < 19) return "Selamat sore";
+          return "Selamat malam";
+        }
+
+        function dateOptions() {
+          const out = [];
+          for (let i = 0; i < 4; i++) {
+            const d = new Date();
+            d.setDate(d.getDate() + i);
+            out.push({
+              id: i,
+              label: i === 0 ? "Hari ini" : i === 1 ? "Besok" : d.toLocaleDateString("id-ID", { weekday: "short" }),
+              sub: d.toLocaleDateString("id-ID", { day: "numeric", month: "short" }),
+              full: d.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long" }),
+            });
+          }
+          return out;
+        }
+
+        function levelOf(total) {
+          let idx = 0;
+          LEVELS.forEach((l, i) => {
+            if (total >= l.min) idx = i;
+          });
+          const cur = LEVELS[idx];
+          const next = LEVELS[idx + 1] || null;
+          return { cur, next, pct: next ? (total - cur.min) / (next.min - cur.min) : 1 };
+        }
+
+        function tone(level) {
+          if (level >= 95)
+            return { name: "Penuh (≥95%)", chip: "bg-rose-50 text-rose-700", bar: "bg-rose-500", from: "#fb7185", to: "#e11d48", pin: "#e11d48", ink: "#ffffff", soft: "bg-rose-50", title: "text-rose-900", sub: "text-rose-700", btn: "bg-rose-500", icon: "text-rose-600" };
+          if (level >= 80)
+            return { name: "Siap Angkut (≥80%)", chip: "bg-amber-50 text-amber-700", bar: "bg-amber-500", from: "#fcd34d", to: "#f59e0b", pin: "#d97706", ink: "#78350f", soft: "bg-amber-50", title: "text-amber-900", sub: "text-amber-700", btn: "bg-amber-500", icon: "text-amber-600" };
+          return { name: "Aman (<80%)", chip: "bg-emerald-50 text-emerald-700", bar: "bg-emerald-500", from: "#6ee7b7", to: "#10b981", pin: "#059669", ink: "#064e3b", soft: "bg-emerald-50", title: "text-emerald-900", sub: "text-emerald-700", btn: "bg-emerald-600", icon: "text-emerald-600" };
+        }
+
+        const TYPE_META = {
+          setor: { Icon: Recycle, tile: "bg-emerald-50 text-emerald-600", label: "Setor" },
+          jemput: { Icon: Truck, tile: "bg-teal-50 text-teal-600", label: "RecyPick" },
+          tukar: { Icon: Gift, tile: "bg-amber-50 text-amber-600", label: "RecyPoin" },
+          edu: { Icon: BookOpen, tile: "bg-lime-50 text-lime-700", label: "RecyLearn" },
+        };
+        const STATUS_STYLE = {
+          Dijadwalkan: "bg-amber-50 text-amber-700",
+          "Otomatis Berkala": "bg-emerald-50 text-emerald-700",
+          Dikonfirmasi: "bg-teal-50 text-teal-700",
+          Selesai: "bg-emerald-50 text-emerald-700",
+          Dibatalkan: "bg-slate-100 text-slate-500",
+        };
+
+        /* ------------------------------ Hook ------------------------------- */
+
+        function useCountUp(target, duration = 800) {
+          const [val, setVal] = useState(0);
+          const from = useRef(0);
+          useEffect(() => {
+            let raf;
+            const start = performance.now();
+            const startVal = from.current;
+            const step = (now) => {
+              const p = Math.min(1, (now - start) / duration);
+              const eased = 1 - Math.pow(1 - p, 3);
+              const v = Math.round(startVal + (target - startVal) * eased);
+              from.current = v;
+              setVal(v);
+              if (p < 1) raf = requestAnimationFrame(step);
+            };
+            raf = requestAnimationFrame(step);
+            return () => cancelAnimationFrame(raf);
+          }, [target, duration]);
+          return val;
+        }
+
+        /* ------------------------- UI bersama ------------------------------ */
+
+        function Card({ className = "", children }) {
+          return (
+            <div className={`rounded-2xl border border-slate-100 bg-white ${className}`} style={{ boxShadow: SHADOW.card }}>
+              {children}
+            </div>
+          );
+        }
+
+        function SectionTitle({ children }) {
+          return <h2 className="text-base font-semibold tracking-tight text-slate-900 lg:text-lg">{children}</h2>;
+        }
+
+        function Button({ variant = "primary", size = "md", className = "", disabled, children, ...rest }) {
+          const pad = size === "sm" ? "px-3.5 py-2" : "px-4 py-3";
+          const base = `inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${pad}`;
+          let look;
+          if (disabled) look = "cursor-not-allowed bg-slate-100 text-slate-400";
+          else if (variant === "primary") look = "bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95";
+          else if (variant === "soft") look = "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 active:scale-95";
+          else if (variant === "white") look = "bg-white text-emerald-700 hover:bg-emerald-50 active:scale-95";
+          else look = "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 active:scale-95";
+          return (
+            <button type="button" disabled={disabled} className={`${base} ${look} ${className}`} {...rest}>
+              {children}
+            </button>
+          );
+        }
+
+        function Chip({ active, onClick, children }) {
+          return (
+            <button
+              type="button"
+              onClick={onClick}
+              aria-pressed={active}
+              className={`rounded-xl border px-3.5 py-2 text-sm font-medium transition active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                active ? "border-emerald-600 bg-emerald-600 text-white" : "border-slate-200 bg-white text-slate-600 hover:border-emerald-300"
+              }`}
+            >
+              {children}
+            </button>
+          );
+        }
+
+        function Stepper({ value, onChange, min, max, step, unit }) {
+          const dec = () => onChange(Math.max(min, +(value - step).toFixed(1)));
+          const inc = () => onChange(Math.min(max, +(value + step).toFixed(1)));
+          const btn = (disabled) =>
+            `flex h-10 w-10 items-center justify-center rounded-xl transition active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+              disabled ? "bg-slate-100 text-slate-300" : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+            }`;
+          return (
+            <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-1.5">
+              <button type="button" aria-label="Kurangi" onClick={dec} disabled={value <= min} className={btn(value <= min)}>
+                <Minus size={18} />
+              </button>
+              <p className="text-lg font-semibold tabular-nums text-slate-900">
+                {fmtKg(value)} <span className="text-sm font-medium text-slate-500">{unit}</span>
+              </p>
+              <button type="button" aria-label="Tambah" onClick={inc} disabled={value >= max} className={btn(value >= max)}>
+                <Plus size={18} />
+              </button>
+            </div>
+          );
+        }
+
+        function Toggle({ on, onChange, label }) {
+          return (
+            <button
+              type="button"
+              role="switch"
+              aria-checked={on}
+              aria-label={label}
+              onClick={() => onChange(!on)}
+              className={`relative h-7 w-12 shrink-0 rounded-full transition focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${on ? "bg-emerald-600" : "bg-slate-200"}`}
+            >
+              <span
+                className="absolute left-0.5 top-0.5 h-6 w-6 rounded-full bg-white shadow transition"
+                style={{ transform: on ? "translateX(20px)" : "translateX(0)" }}
+              />
+            </button>
+          );
+        }
+
+        function Sheet({ title, onClose, children }) {
+          useEffect(() => {
+            const onKey = (e) => {
+              if (e.key === "Escape") onClose();
+            };
+            window.addEventListener("keydown", onKey);
+            return () => window.removeEventListener("keydown", onKey);
+          }, [onClose]);
+
+          return (
+            <div className="fixed inset-0 z-50 flex items-end justify-center lg:items-center lg:p-6" role="dialog" aria-modal="true" aria-label={title}>
+              <div className="eco-fade absolute inset-0" style={{ background: "rgba(15, 23, 42, 0.5)" }} onClick={onClose} />
+              <div
+                className="eco-sheet relative flex w-full max-w-lg flex-col rounded-t-3xl bg-white lg:rounded-3xl"
+                style={{ maxHeight: "92vh", boxShadow: SHADOW.sheet }}
+              >
+                <div className="flex items-center justify-between px-5 pb-3 pt-5">
+                  <h2 className="text-lg font-semibold tracking-tight text-slate-900">{title}</h2>
+                  <button
+                    type="button"
+                    aria-label="Tutup"
+                    onClick={onClose}
+                    className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+                <div className="overflow-y-auto px-5 pb-6">{children}</div>
+              </div>
+            </div>
+          );
+        }
+
+        function Toasts({ items }) {
+          return (
+            <div
+              className="pointer-events-none fixed inset-x-4 top-4 flex flex-col items-center gap-2 lg:inset-x-auto lg:right-6 lg:top-6 lg:items-end"
+              style={{ zIndex: 70 }}
+              aria-live="polite"
+            >
+              {items.map((t) => (
+                <div
+                  key={t.id}
+                  className="eco-toast flex max-w-sm items-center gap-2.5 rounded-2xl bg-slate-900 py-3 pl-3 pr-4 text-sm text-white"
+                  style={{ boxShadow: SHADOW.float }}
+                >
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500">
+                    <Check size={14} strokeWidth={3} />
+                  </span>
+                  {t.msg}
+                </div>
+              ))}
+            </div>
+          );
+        }
+
+        function Avatar({ src, name, size = 48 }) {
+          const style = { width: size, height: size };
+          if (src) {
+            return <img src={src} alt={`Foto profil ${name}`} style={style} className="rounded-full border-2 border-white object-cover shadow-sm" />;
+          }
+          return (
+            <div role="img" aria-label={`Foto profil ${name}`} style={style} className="shrink-0 overflow-hidden rounded-full border-2 border-white bg-emerald-100 shadow-sm">
+              <svg viewBox="0 0 48 48" className="h-full w-full">
+                <rect width="48" height="48" fill="#a7f3d0" />
+                <path d="M8 48c0-9 7-15 16-15s16 6 16 15z" fill="#059669" />
+                <circle cx="24" cy="19" r="8" fill="#fcd5b0" />
+                <path d="M15.5 18c0-5 3.5-9 8.5-9s8.5 4 8.5 9c-2-3-5-4.5-8.5-4.5S17.5 15 15.5 18z" fill="#3b2a20" />
+              </svg>
+            </div>
+          );
+        }
+
+        function LiveBadge() {
+          return (
+            <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              </span>
+              Live IoT
+            </span>
+          );
+        }
+
+        function SyncLabel({ at }) {
+          const [now, setNow] = useState(Date.now());
+          useEffect(() => {
+            const id = setInterval(() => setNow(Date.now()), 1000);
+            return () => clearInterval(id);
+          }, []);
+          const s = Math.max(0, Math.round((now - at) / 1000));
+          return <>{s < 2 ? "baru saja" : `${s} detik lalu`}</>;
+        }
+
+        function BinTube({ label, level, tall }) {
+          const t = tone(level);
+          const [ready, setReady] = useState(false);
+          useEffect(() => {
+            const id = setTimeout(() => setReady(true), 150);
+            return () => clearTimeout(id);
+          }, []);
+          return (
+            <div>
+              <div
+                role="progressbar"
+                aria-label={`${label} ${level}% penuh`}
+                aria-valuenow={level}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                className="relative overflow-hidden rounded-2xl bg-slate-100"
+                style={{ height: tall ? 144 : 112 }}
+              >
+                <div
+                  className="absolute inset-x-0 bottom-0"
+                  style={{
+                    height: ready ? `${level}%` : "0%",
+                    background: `linear-gradient(to top, ${t.to}, ${t.from})`,
+                    transition: "height 1s ease-out",
+                  }}
+                />
+                <span
+                  className="absolute inset-0 flex items-center justify-center text-lg font-semibold tabular-nums"
+                  style={{ color: level >= 50 ? t.ink : "#475569" }}
+                >
+                  {level}%
+                </span>
+              </div>
+              <p className="mt-2 text-center text-xs text-slate-500">{label}</p>
+            </div>
+          );
+        }
+
+        function Ring({ value, max, size = 112, stroke = 12 }) {
+          const r = (size - stroke) / 2;
+          const c = 2 * Math.PI * r;
+          const pct = Math.min(1, value / max);
+          const [ready, setReady] = useState(false);
+          useEffect(() => {
+            const id = setTimeout(() => setReady(true), 200);
+            return () => clearTimeout(id);
+          }, []);
+          return (
+            <div className="relative shrink-0" style={{ width: size, height: size }}>
+              <svg width={size} height={size} className="-rotate-90 transform">
+                <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#d1fae5" strokeWidth={stroke} />
+                <circle
+                  cx={size / 2}
+                  cy={size / 2}
+                  r={r}
+                  fill="none"
+                  stroke="#059669"
+                  strokeWidth={stroke}
+                  strokeLinecap="round"
+                  strokeDasharray={c}
+                  strokeDashoffset={c * (1 - (ready ? pct : 0))}
+                  style={{ transition: "stroke-dashoffset 1s ease-out" }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-xl font-semibold tabular-nums text-slate-900">{Math.round(pct * 100)}%</span>
+                <span className="text-xs text-slate-500">tercapai</span>
+              </div>
+            </div>
+          );
+        }
+
+        function HistoryRow({ item }) {
+          const m = TYPE_META[item.type] || TYPE_META.setor;
+          return (
+            <li className="flex items-center gap-3 py-3">
+              <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${m.tile}`}>
+                <m.Icon size={20} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-slate-900">{item.title}</p>
+                <p className="truncate text-xs text-slate-500">{item.sub}</p>
+                {item.status && (
+                  <span className={`mt-1 inline-block rounded-md px-2 py-0.5 text-xs font-medium ${STATUS_STYLE[item.status] || "bg-slate-100 text-slate-600"}`}>{item.status}</span>
+                )}
+              </div>
+              <div className="shrink-0 text-right">
+                {item.points !== 0 && (
+                  <p className={`text-sm font-semibold tabular-nums ${item.points > 0 ? "text-emerald-600" : "text-slate-700"}`}>
+                    {item.points > 0 ? "+" : "-"}
+                    {fmt(Math.abs(item.points))}
+                  </p>
+                )}
+                <p className="text-xs text-slate-400">{item.time}</p>
+              </div>
+            </li>
+          );
+        }
+
+        /* ================================================================== */
+        /*  Halaman Beranda                                                    */
+        /* ================================================================== */
+
+        function Sparkline({ data }) {
+          const w = 260;
+          const h = 90;
+          const pad = 8;
+          const min = Math.min(...data);
+          const max = Math.max(...data);
+          const pts = data.map((v, i) => [
+            pad + (i * (w - pad * 2)) / (data.length - 1),
+            h - pad - ((v - min) / (max - min || 1)) * (h - pad * 2),
+          ]);
+          const line = pts.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ");
+          const last = pts[pts.length - 1];
+          const area = `${line} L${last[0].toFixed(1)} ${h} L${pts[0][0].toFixed(1)} ${h} Z`;
+          return (
+            <svg viewBox={`0 0 ${w} ${h}`} className="h-full w-full" aria-hidden="true">
+              <defs>
+                <linearGradient id="ecoSpark" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stopColor="#ffffff" stopOpacity="0.35" />
+                  <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <path d={area} fill="url(#ecoSpark)" />
+              <path d={line} fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx={last[0]} cy={last[1]} r="9" fill="#ffffff" opacity="0.25" />
+              <circle cx={last[0]} cy={last[1]} r="4.5" fill="#ffffff" />
+            </svg>
+          );
+        }
+
+        function BalanceHero({ points, trend, todayGain, onRedeem, onScan }) {
+          const shown = useCountUp(points);
+          return (
+            <section
+              aria-label="Saldo RecyPoin"
+              className="relative h-full overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-700 p-5 text-white lg:p-8"
+              style={{ boxShadow: "0 18px 40px rgba(5, 150, 105, 0.28)" }}
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 200 200"
+                fill="none"
+                className="pointer-events-none absolute -right-16 -top-16 h-72 w-72 lg:-right-20 lg:-top-24 lg:h-96 lg:w-96"
+              >
+                <circle cx="100" cy="100" r="95" stroke="#34d399" strokeWidth="1.2" opacity="0.55" />
+                <circle cx="100" cy="100" r="70" stroke="#34d399" strokeWidth="1.2" opacity="0.4" />
+                <circle cx="100" cy="100" r="45" stroke="#34d399" strokeWidth="1.2" opacity="0.3" />
+                <circle cx="167" cy="33" r="5" fill="#a7f3d0" />
+                <circle cx="30" cy="125" r="3.5" fill="#6ee7b7" />
+              </svg>
+
+              <div className="relative flex h-full flex-col gap-6 lg:flex-row lg:items-stretch lg:justify-between">
+                <div className="flex flex-col lg:max-w-sm lg:justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 text-sm text-emerald-100">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500 text-white">
+                        <FeatureIcon id="recypoin" size={16} />
+                      </span>
+                      Saldo Dompet RecyPoin
+                    </div>
+                    <p className="mt-4 flex items-baseline gap-2">
+                      <span className="text-4xl font-semibold tabular-nums tracking-tight lg:text-5xl">{fmt(shown)}</span>
+                      <span className="text-base text-emerald-100">poin</span>
+                    </p>
+                    <p className="mt-2 flex items-center gap-1.5 text-sm text-emerald-50">
+                      <TrendingUp size={16} />
+                      {todayGain > 0 ? `+${fmt(todayGain)} poin masuk hari ini` : "Belum ada poin masuk hari ini"}
+                    </p>
+                    <p className="mt-0.5 text-xs text-emerald-200">Setara Rp {fmt(points * POINT_VALUE)} untuk token listrik, pulsa & sembako</p>
+                  </div>
+
+                  <div className="mt-6 flex gap-2.5 lg:mt-8">
+                    <Button variant="white" onClick={onRedeem} className="flex-1 lg:flex-none lg:px-6">
+                      <Gift size={18} />
+                      Tukar RecyPoin
+                    </Button>
+                    <button
+                      type="button"
+                      onClick={onScan}
+                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white transition active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-white lg:flex-none lg:px-6"
+                      style={{ background: "rgba(255,255,255,0.14)", border: "1px solid rgba(255,255,255,0.28)" }}
+                    >
+                      <ScanLine size={18} />
+                      Setor sampah
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  className="hidden w-72 flex-col rounded-2xl p-4 lg:flex"
+                  style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)" }}
+                >
+                  <p className="text-sm text-emerald-50">Tren saldo 7 hari terakhir</p>
+                  <div className="mt-3 min-h-0 flex-1" style={{ minHeight: 96 }}>
+                    <Sparkline data={trend} />
+                  </div>
+                </div>
+              </div>
+            </section>
+          );
+        }
+
+        function IoTCard({ site, syncAt, onMap, onPickup }) {
+          const [ready, setReady] = useState(false);
+          useEffect(() => {
+            const id = setTimeout(() => setReady(true), 250);
+            return () => clearTimeout(id);
+          }, []);
+
+          const level = site.bins.organik;
+          const t = tone(level);
+          const etaHours = Math.max(1, Math.round((100 - level) / 2.5));
+
+          return (
+            <Card className="h-full p-5 lg:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <SectionTitle>RecySense — Pantauan Sensor IoT TPS</SectionTitle>
+                  <LiveBadge />
+                </div>
+                <button
+                  type="button"
+                  onClick={onMap}
+                  className="flex items-center gap-1 rounded-lg px-2 py-1 text-sm font-medium text-emerald-700 transition hover:bg-emerald-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                >
+                  Buka peta IoT
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+
+              <div className="mt-5 grid gap-6 lg:grid-cols-5 lg:gap-8">
+                <div className="lg:col-span-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                      <FeatureIcon id="recysense" size={24} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-900">{site.name}</p>
+                      <p className="text-sm text-slate-500">
+                        Organik <span className="font-semibold text-slate-800">{level}% Terisi</span>
+                      </p>
+                    </div>
+                    <span className={`ml-auto shrink-0 rounded-lg px-2.5 py-1 text-xs font-medium ${t.chip}`}>{t.name}</span>
+                  </div>
+
+                  <div
+                    role="progressbar"
+                    aria-label={`Organik ${level}% penuh`}
+                    aria-valuenow={level}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    className="mt-5 h-3.5 w-full overflow-hidden rounded-full bg-slate-100"
+                  >
+                    <div
+                      className={`h-full rounded-full ${t.bar}`}
+                      style={{ width: ready ? `${level}%` : "0%", transition: "width 1s ease-out" }}
+                    />
+                  </div>
+                  <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+                    <span>Ambang notifikasi: 80%</span>
+                    <span>{level >= 100 ? "Sudah penuh" : `Estimasi penuh dalam ${etaHours} jam`}</span>
+                  </div>
+
+                  {level >= 80 && (
+                    <div className={`mt-4 flex items-start gap-3 rounded-xl p-3 ${t.soft}`}>
+                      <AlertTriangle size={18} className={`mt-0.5 shrink-0 ${t.icon}`} />
+                      <div className="min-w-0 flex-1">
+                        <p className={`text-sm font-medium ${t.title}`}>Kapasitas mencapai ambang 80%</p>
+                        <p className={`text-xs ${t.sub}`}>Notifikasi otomatis dikirim ke petugas pengangkut untuk efisiensi rute dan bahan bakar.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={onPickup}
+                        className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 ${t.btn}`}
+                      >
+                        Panggil RecyPick
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="lg:col-span-2">
+                  <p className="mb-3 text-sm font-medium text-slate-700">Kategori sensor lain</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <BinTube label="Plastik & Kertas" level={site.bins.anorganik} />
+                    <BinTube label="E-Waste" level={site.bins.ewaste} />
+                  </div>
+                </div>
+              </div>
+
+              <p className="mt-5 flex items-center gap-1.5 text-xs text-slate-400">
+                <Wifi size={14} />
+                Sensor IoT aktif, diperbarui <SyncLabel at={syncAt} />
+              </p>
+            </Card>
+          );
+        }
+
+        function QuickActions({ onRun }) {
+          return (
+            <section aria-label="7 Fitur Utama RecyGO">
+              <div className="flex items-center justify-between">
+                <SectionTitle>Fitur Ekosistem RecyGO</SectionTitle>
+                <span className="text-xs text-slate-400">7 Fitur Terintegrasi Hulu ke Hilir</span>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+                {SERVICES.map(({ id, label, hint, tile }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => onRun(id)}
+                    className="group relative flex transform flex-col items-start gap-5 rounded-2xl border border-slate-100 bg-white p-4 text-left transition hover:-translate-y-0.5 hover:border-emerald-200 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 lg:p-5"
+                    style={{ boxShadow: SHADOW.card }}
+                  >
+                    <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ${tile}`}>
+                      <FeatureIcon id={id} size={24} />
+                    </span>
+                    <ArrowUpRight size={18} className="absolute right-4 top-4 text-slate-300 transition group-hover:text-emerald-600" />
+                    <span>
+                      <span className="block text-sm font-semibold text-slate-900 lg:text-base">{label}</span>
+                      <span className="mt-0.5 block text-xs text-slate-500 lg:text-sm">{hint}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          );
+        }
+
+        function WeekBars({ data }) {
+          const days = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
+          const max = Math.max(8, ...data);
+          return (
+            <div className="mt-5 border-t border-slate-100 pt-4">
+              <p className="text-sm font-medium text-slate-700">Setoran 7 hari (kg)</p>
+              <div className="mt-3 flex items-end gap-2" style={{ height: 84 }}>
+                {data.map((v, i) => {
+                  const future = i > TODAY_IDX;
+                  const today = i === TODAY_IDX;
+                  return (
+                    <div key={days[i]} className="flex h-full flex-1 items-end" title={future ? days[i] : `${days[i]}: ${fmtKg(v)} kg`}>
+                      <div
+                        className={`w-full rounded-lg ${today ? "bg-emerald-600" : future ? "bg-slate-100" : "bg-emerald-200"}`}
+                        style={{ height: future ? "8%" : `${Math.max(8, (v / max) * 100)}%`, transition: "height 0.8s ease-out" }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-2 flex gap-2">
+                {days.map((d, i) => (
+                  <span key={d} className={`flex-1 text-center text-xs ${i === TODAY_IDX ? "font-semibold text-emerald-700" : "text-slate-400"}`}>
+                    {d}
+                  </span>
+                ))}
+              </div>
+            </div>
+          );
+        }
+
+        function ImpactCard({ monthKg, target, weekly, treesSaved, carbonReduced, onOpenTrack }) {
+          return (
+            <Card className="h-full p-5 lg:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <SectionTitle>RecyTrack — Jejak Karbon</SectionTitle>
+                <button
+                  type="button"
+                  onClick={onOpenTrack}
+                  className="rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100"
+                >
+                  Kalkulator
+                </button>
+              </div>
+              <div className="mt-4 flex items-center gap-5">
+                <Ring value={monthKg} max={target} />
+                <div className="min-w-0 space-y-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                      <TreePine size={18} />
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold tabular-nums text-slate-900">{treesSaved} Pohon</p>
+                      <p className="text-xs text-slate-500">diselamatkan bulan ini</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-600">
+                      <Wind size={18} />
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold tabular-nums text-slate-900">{fmtKg(carbonReduced)} kg Emisi</p>
+                      <p className="text-xs text-slate-500">karbon berhasil dikurangi</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-xl bg-emerald-50 p-3 text-xs leading-relaxed text-emerald-900">
+                "Bulan ini, Anda telah menyelamatkan <span className="font-semibold">{treesSaved} pohon</span> dan mengurangi <span className="font-semibold">{fmtKg(carbonReduced)} kg emisi karbon</span>."
+              </div>
+
+              <WeekBars data={weekly} />
+            </Card>
+          );
+        }
+
+        function PickupItem({ p, onCancel }) {
+          return (
+            <div className="rounded-xl bg-teal-50 p-3">
+              <div className="flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-teal-600">
+                  <Truck size={18} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-teal-900">{p.dateLabel}</p>
+                  <p className="text-xs text-teal-700">
+                    {p.slot}, {p.label} sekitar {fmtKg(p.kg)} kg ({p.destType || "Rumah Warga"})
+                  </p>
+                  <span className={`mt-1.5 inline-block rounded-md px-2 py-0.5 text-xs font-medium ${STATUS_STYLE[p.status] || "bg-teal-100 text-teal-800"}`}>{p.status}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onCancel(p.id)}
+                  className="rounded-lg px-2 py-1 text-xs font-medium text-teal-700 transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                >
+                  Batalkan
+                </button>
+              </div>
+            </div>
+          );
+        }
+
+        function ActivityCard({ history, pickups, onAll, onCancel }) {
+          return (
+            <Card className="h-full p-5 lg:p-6">
+              {pickups.length > 0 && (
+                <div className="mb-5">
+                  <SectionTitle>Jadwal Armada RecyPick</SectionTitle>
+                  <div className="mt-3 space-y-2">
+                    {pickups.map((p) => (
+                      <PickupItem key={p.id} p={p} onCancel={onCancel} />
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <SectionTitle>Aktivitas terbaru</SectionTitle>
+                <button
+                  type="button"
+                  onClick={onAll}
+                  className="rounded-lg px-2 py-1 text-sm font-medium text-emerald-700 transition hover:bg-emerald-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                >
+                  Lihat semua
+                </button>
+              </div>
+              <ul className="mt-1 divide-y divide-slate-100">
+                {history.slice(0, 4).map((i) => (
+                  <HistoryRow key={i.id} item={i} />
+                ))}
+              </ul>
+            </Card>
+          );
+        }
+
+        function HomePage({ c }) {
+          const mawar = c.sites.find((s) => s.id === "mawar") || c.sites[0];
+          const todayGain = c.history.filter((h) => h.points > 0 && h.time.startsWith("Hari ini")).reduce((a, h) => a + h.points, 0);
+          const trend = [1710, 1840, 1795, 2010, 2105, 2260, c.points];
+
+          return (
+            <div className="grid gap-5 lg:grid-cols-12 lg:gap-6">
+              <div className="order-1 lg:col-span-8">
+                <BalanceHero
+                  points={c.points}
+                  trend={trend}
+                  todayGain={todayGain}
+                  onRedeem={() => c.setTab("recypoin")}
+                  onScan={() => c.openScan("mawar")}
+                />
+              </div>
+              <div className="order-4 lg:order-2 lg:col-span-4">
+                <ImpactCard
+                  monthKg={c.monthKg}
+                  target={40}
+                  weekly={c.weekly}
+                  treesSaved={c.treesSaved}
+                  carbonReduced={c.carbonReduced}
+                  onOpenTrack={() => c.setTab("recytrack")}
+                />
+              </div>
+              <div className="order-3 lg:col-span-12">
+                <QuickActions onRun={c.run} />
+              </div>
+              <div className="order-2 lg:order-4 lg:col-span-8">
+                <IoTCard
+                  site={mawar}
+                  syncAt={c.syncAt}
+                  onMap={() => {
+                    c.setSelectedSite("mawar");
+                    c.setTab("recysense");
+                  }}
+                  onPickup={() => c.openPickup(["organik"])}
+                />
+              </div>
+              <div className="order-5 lg:col-span-4">
+                <ActivityCard history={c.history} pickups={c.pickups} onAll={() => c.setTab("history")} onCancel={c.cancelPickup} />
+              </div>
+            </div>
+          );
+        }
+
+        /* ================================================================== */
+        /*  Fitur 4: RecySense (Peta & Sensor IoT TPS)                         */
+        /* ================================================================== */
+
+        const MAP_BLOCKS = [
+          [40, 120, 90, 60], [160, 130, 70, 50], [380, 95, 80, 70], [485, 175, 90, 55], [60, 205, 70, 50],
+          [415, 265, 110, 50], [210, 335, 80, 55], [345, 330, 70, 55], [255, 15, 90, 40], [20, 15, 80, 50],
+        ];
+        const MAP_ROADS = [
+          "M-10 245 C 120 230, 220 260, 330 240 S 520 220, 610 240",
+          "M300 -10 C 312 100, 285 200, 305 300 S 322 380, 310 430",
+          "M-10 400 C 150 345, 300 335, 610 150",
+          "M122 -10 L 127 430",
+          "M482 -10 C 470 120, 520 260, 500 430",
+        ];
+        const USER_POS = { x: 245, y: 295 };
+
+        function MapCanvas({ sites, selectedId, onSelect, filter }) {
+          const sel = sites.find((s) => s.id === selectedId);
+          const ordered = [...sites].sort((a, b) => (a.id === selectedId) - (b.id === selectedId));
+          return (
+            <svg viewBox="0 0 600 420" className="block h-auto w-full" role="group" aria-label="Peta lokasi sensor RecySense">
+              <rect width="600" height="420" fill="#f0fdf4" />
+              {MAP_BLOCKS.map(([x, y, w, h], i) => (
+                <rect key={i} x={x} y={y} width={w} height={h} rx="10" fill="#e3f4ea" />
+              ))}
+              <rect x="30" y="290" width="150" height="100" rx="26" fill="#bbf7d0" />
+              <rect x="395" y="20" width="140" height="62" rx="22" fill="#bbf7d0" />
+              <path d="M-10 78 C 90 48, 170 108, 250 70 S 380 28, 610 78" fill="none" stroke="#bae6fd" strokeWidth="24" strokeLinecap="round" />
+              {MAP_ROADS.map((d, i) => (
+                <path key={`c${i}`} d={d} fill="none" stroke="#e2e8f0" strokeWidth="20" strokeLinecap="round" />
+              ))}
+              {MAP_ROADS.map((d, i) => (
+                <path key={`r${i}`} d={d} fill="none" stroke="#ffffff" strokeWidth="15" strokeLinecap="round" />
+              ))}
+
+              {sel && (
+                <line
+                  x1={USER_POS.x}
+                  y1={USER_POS.y}
+                  x2={sel.x}
+                  y2={sel.y}
+                  stroke="#059669"
+                  strokeWidth="3.5"
+                  strokeDasharray="1 9"
+                  strokeLinecap="round"
+                />
+              )}
+
+              <g transform={`translate(${USER_POS.x} ${USER_POS.y})`}>
+                <circle r="16" fill="#0f766e" opacity="0.18">
+                  <animate attributeName="r" values="12;24;12" dur="2.4s" repeatCount="indefinite" />
+                </circle>
+                <circle r="7" fill="#0f766e" stroke="#ffffff" strokeWidth="3" />
+                <text y="26" textAnchor="middle" fontSize="11.5" fontWeight="600" fill="#0f766e" stroke="#ffffff" strokeWidth="3.5" paintOrder="stroke">
+                  fiandhikaaa
+                </text>
+              </g>
+
+              {ordered.map((s) => {
+                const w = worst(s);
+                const t = tone(w);
+                const isSel = s.id === selectedId;
+                const dim = filter === "attention" && w < 80;
+                return (
+                  <g
+                    key={s.id}
+                    transform={`translate(${s.x} ${s.y})`}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`${s.name}, ${w}% terisi`}
+                    onClick={() => onSelect(s.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onSelect(s.id);
+                      }
+                    }}
+                    style={{ cursor: "pointer", opacity: dim ? 0.3 : 1, outline: "none" }}
+                  >
+                    {isSel && (
+                      <circle r="22" fill={t.pin} opacity="0.25">
+                        <animate attributeName="r" values="20;36;20" dur="2s" repeatCount="indefinite" />
+                        <animate attributeName="opacity" values="0.3;0;0.3" dur="2s" repeatCount="indefinite" />
+                      </circle>
+                    )}
+                    <circle r={isSel ? 20 : 17} fill={t.pin} stroke="#ffffff" strokeWidth="3.5" />
+                    <text y="4.5" textAnchor="middle" fontSize="12" fontWeight="700" fill="#ffffff">
+                      {w}
+                    </text>
+                    <text y="38" textAnchor="middle" fontSize="11.5" fontWeight="600" fill="#334155" stroke="#ffffff" strokeWidth="3.5" paintOrder="stroke">
+                      {s.name}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
+          );
+        }
+
+        function MapPage({ c }) {
+          const [filter, setFilter] = useState("all");
+          const sel = c.sites.find((s) => s.id === c.selectedSite) || c.sites[0];
+          const list = filter === "all" ? c.sites : c.sites.filter((s) => worst(s) >= 80);
+          const selWorst = worst(sel);
+          const asked = c.requested.includes(sel.id);
+
+          return (
+            <div className="grid gap-5 lg:grid-cols-12 lg:gap-6">
+              <div className="lg:col-span-7 xl:col-span-8">
+                <Card className="overflow-hidden">
+                  <div className="flex items-center justify-between gap-3 px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <SectionTitle>Peta Sensor IoT RecySense</SectionTitle>
+                      <LiveBadge />
+                    </div>
+                    <p className="hidden text-xs text-slate-400 sm:block">
+                      Diperbarui <SyncLabel at={c.syncAt} />
+                    </p>
+                  </div>
+                  <MapCanvas sites={c.sites} selectedId={sel.id} onSelect={c.setSelectedSite} filter={filter} />
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-5 py-4 text-xs text-slate-500">
+                    {[
+                      ["#059669", "Aman (<80%)"],
+                      ["#d97706", "Ambang Angkut (80%+)"],
+                      ["#e11d48", "Penuh (95%+)"],
+                    ].map(([color, label]) => (
+                      <span key={label} className="flex items-center gap-1.5">
+                        <span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />
+                        {label}
+                      </span>
+                    ))}
+                    <span className="text-slate-400">Notifikasi rute efisien aktif saat kapasitas mencapai 80%</span>
+                  </div>
+                </Card>
+              </div>
+
+              <div className="space-y-5 lg:col-span-5 xl:col-span-4">
+                <Card className="p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h2 className="truncate text-base font-semibold text-slate-900">{sel.name}</h2>
+                      <p className="mt-0.5 flex items-center gap-1 text-sm text-slate-500">
+                        <MapPin size={14} />
+                        {sel.area}, {sel.dist} dari lokasimu
+                      </p>
+                    </div>
+                    <span className={`shrink-0 rounded-lg px-2.5 py-1 text-xs font-medium ${tone(selWorst).chip}`}>{tone(selWorst).name}</span>
+                  </div>
+                  <div className="mt-4 grid grid-cols-3 gap-3">
+                    {Object.keys(sel.bins).map((k) => (
+                      <BinTube key={k} label={BIN_LABEL[k]} level={sel.bins[k]} tall />
+                    ))}
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-2.5">
+                    <Button onClick={() => c.openScan(sel.id)}>
+                      <ScanLine size={18} />
+                      Setor ke sini
+                    </Button>
+                    <Button variant="soft" disabled={asked || selWorst < 80} onClick={() => c.requestEmpty(sel)}>
+                      {asked ? "Armada menuju lokasi" : "Kirim Armada (≥80%)"}
+                    </Button>
+                  </div>
+                  {selWorst < 80 && (
+                    <p className="mt-2.5 text-xs text-slate-400">Demi efisiensi bahan bakar, pengiriman armada dibuka saat salah satu wadah mencapai 80%.</p>
+                  )}
+                </Card>
+
+                <Card className="p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <SectionTitle>Daftar TPS Komunal</SectionTitle>
+                    <div className="flex gap-1.5">
+                      <Chip active={filter === "all"} onClick={() => setFilter("all")}>Semua</Chip>
+                      <Chip active={filter === "attention"} onClick={() => setFilter("attention")}>Ambang ≥80%</Chip>
+                    </div>
+                  </div>
+                  <ul className="mt-3 space-y-2">
+                    {list.length === 0 && <li className="rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">Semua TPS masih di bawah 80%. Armada tidak perlu berangkat.</li>}
+                    {list.map((s) => {
+                      const w = worst(s);
+                      const t = tone(w);
+                      const active = s.id === sel.id;
+                      return (
+                        <li key={s.id}>
+                          <button
+                            type="button"
+                            onClick={() => c.setSelectedSite(s.id)}
+                            className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                              active ? "border-emerald-500 bg-emerald-50" : "border-slate-100 bg-white hover:border-emerald-200"
+                            }`}
+                          >
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-semibold text-white" style={{ background: t.pin }}>
+                              {w}
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-semibold text-slate-900">{s.name}</span>
+                              <span className="block text-xs text-slate-500">{s.dist} dari lokasimu</span>
+                            </span>
+                            <span className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-medium ${t.chip}`}>{t.name}</span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </Card>
+              </div>
+            </div>
+          );
+        }
+
+        /* ================================================================== */
+        /*  Fitur 5: RecyMart (Marketplace B2B dengan Gambar Produk)           */
+        /* ================================================================== */
+
+        function RecyMartPage({ c }) {
+          const [cat, setCat] = useState("all");
+          const list = cat === "all" ? B2B_PRODUCTS : B2B_PRODUCTS.filter((p) => p.cat === cat);
+          const cats = [
+            ["all", "Semua Komoditas"],
+            ["plastik", "Plastik Industri"],
+            ["organik", "Kompos & Maggot"],
+            ["kertas", "Kertas & Kardus"],
+            ["ewaste", "E-Waste"],
+          ];
+
+          return (
+            <div className="space-y-5 lg:space-y-6">
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-700 p-5 text-white lg:p-6">
+                <svg aria-hidden="true" viewBox="0 0 200 200" fill="none" className="pointer-events-none absolute -right-12 -top-16 h-56 w-56">
+                  <circle cx="100" cy="100" r="95" stroke="#34d399" strokeWidth="1.2" opacity="0.5" />
+                  <circle cx="100" cy="100" r="62" stroke="#34d399" strokeWidth="1.2" opacity="0.4" />
+                </svg>
+                <div className="relative flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm text-emerald-100">Marketplace Business-to-Business (B2B) Terintegrasi</p>
+                    <p className="mt-1 text-xl font-semibold tracking-tight lg:text-2xl">
+                      Hubungkan Bank Sampah Desa & Pemuda Pengepul dengan Industri
+                    </p>
+                  </div>
+                  <span className="rounded-xl bg-white/15 px-3.5 py-2 text-xs font-semibold text-white">
+                    6 Komoditas Tersedia
+                  </span>
+                </div>
+              </div>
+
+              <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 lg:mx-0 lg:px-0">
+                {cats.map(([id, label]) => (
+                  <div key={id} className="shrink-0">
+                    <Chip active={cat === id} onClick={() => setCat(id)}>
+                      {label}
+                    </Chip>
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
+                {list.map((p) => (
+                  <Card key={p.id} className="flex flex-col overflow-hidden">
+                    <div className="relative h-36 w-full overflow-hidden bg-slate-100">
+                      <MartProductImage type={p.imageType} />
+                      <span
+                        className="absolute left-3 top-3 rounded-lg px-2.5 py-1 text-xs font-medium text-white"
+                        style={{ background: "rgba(15, 23, 42, 0.65)" }}
+                      >
+                        {p.catLabel}
+                      </span>
+                      <span className="absolute bottom-2.5 right-2.5 rounded-lg bg-white/95 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+                        Stok: {fmt(p.stockKg)} kg
+                      </span>
+                    </div>
+                    <div className="flex flex-1 flex-col p-4">
+                      <p className="text-xs font-medium text-emerald-700">{p.seller}</p>
+                      <h3 className="mt-0.5 text-sm font-semibold text-slate-900">{p.title}</h3>
+                      <p className="mt-1 text-xs leading-relaxed text-slate-500">{p.desc}</p>
+                      <p className="mt-2 text-xs text-slate-400">Mitra pembeli: {p.buyer}</p>
+
+                      <div className="mt-auto pt-4">
+                        <div className="flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
+                          <div>
+                            <span className="text-sm font-semibold tabular-nums text-slate-900">Rp {fmt(p.price)}</span>
+                            <span className="text-xs text-slate-500"> / kg</span>
+                            <p className="text-xs text-slate-400">Min. order {p.minKg} kg</p>
+                          </div>
+                          <Button size="sm" onClick={() => c.openB2B(p)}>
+                            Pesan B2B
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          );
+        }
+
+        /* ================================================================== */
+        /*  Fitur 6: RecyTrack (Kalkulator Jejak Karbon Personal)              */
+        /* ================================================================== */
+
+        function RecyTrackPage({ c }) {
+          const [plastikKg, setPlastikKg] = useState(3);
+          const [organikKg, setOrganikKg] = useState(5);
+          const [kertasKg, setKertasKg] = useState(2);
+          const [ewasteKg, setEwasteKg] = useState(1);
+
+          const calcCo2 = +(plastikKg * 1.4 + organikKg * 0.6 + kertasKg * 0.9 + ewasteKg * 2.2).toFixed(1);
+          const calcTrees = Math.max(1, Math.round(calcCo2 * 1.8));
+
+          return (
+            <div className="space-y-5 lg:space-y-6">
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-700 p-6 text-white lg:p-8">
+                <p className="text-sm text-emerald-100">Apresiasi Kontribusi Lingkungan — @{c.user.name}</p>
+                <h2 className="mt-2 text-xl font-semibold leading-snug tracking-tight lg:text-2xl">
+                  "Bulan ini, Anda telah menyelamatkan {c.treesSaved} pohon dan mengurangi {fmtKg(c.carbonReduced)} kg emisi karbon."
+                </h2>
+                <div className="mt-5 grid grid-cols-3 gap-3 sm:max-w-lg">
+                  <div className="rounded-2xl bg-white/15 p-3">
+                    <p className="text-2xl font-semibold tabular-nums">{c.treesSaved}</p>
+                    <p className="text-xs text-emerald-100">Pohon diselamatkan</p>
+                  </div>
+                  <div className="rounded-2xl bg-white/15 p-3">
+                    <p className="text-2xl font-semibold tabular-nums">{fmtKg(c.carbonReduced)} kg</p>
+                    <p className="text-xs text-emerald-100">Reduksi emisi CO2</p>
+                  </div>
+                  <div className="rounded-2xl bg-white/15 p-3">
+                    <p className="text-2xl font-semibold tabular-nums">{fmtKg(c.monthKg)} kg</p>
+                    <p className="text-xs text-emerald-100">Sampah terpilah</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-5 lg:grid-cols-12 lg:gap-6">
+                <Card className="p-5 lg:col-span-7 lg:p-6">
+                  <SectionTitle>Kalkulator Simulasi Jejak Karbon Personal</SectionTitle>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Masukkan berat sampah terpilah untuk menghitung estimasi pengurangan emisi karbon dan penyelamatan pohon.
+                  </p>
+                  <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <p className="mb-2 text-sm font-medium text-slate-700">Sampah Plastik</p>
+                      <Stepper value={plastikKg} onChange={setPlastikKg} min={0} max={50} step={0.5} unit="kg" />
+                    </div>
+                    <div>
+                      <p className="mb-2 text-sm font-medium text-slate-700">Sampah Organik</p>
+                      <Stepper value={organikKg} onChange={setOrganikKg} min={0} max={50} step={0.5} unit="kg" />
+                    </div>
+                    <div>
+                      <p className="mb-2 text-sm font-medium text-slate-700">Sampah Kertas</p>
+                      <Stepper value={kertasKg} onChange={setKertasKg} min={0} max={50} step={0.5} unit="kg" />
+                    </div>
+                    <div>
+                      <p className="mb-2 text-sm font-medium text-slate-700">Limbah Elektronik (E-Waste)</p>
+                      <Stepper value={ewasteKg} onChange={setEwasteKg} min={0} max={20} step={0.5} unit="kg" />
+                    </div>
+                  </div>
+                </Card>
+
+                <Card className="flex flex-col justify-between p-5 lg:col-span-5 lg:p-6">
+                  <div>
+                    <SectionTitle>Hasil Perhitungan Dampak</SectionTitle>
+                    <div className="mt-4 rounded-2xl bg-emerald-50 p-4">
+                      <p className="text-xs text-emerald-700">Estimasi Emisi Dihindari</p>
+                      <p className="mt-1 text-3xl font-semibold tabular-nums text-emerald-900">-{fmtKg(calcCo2)} kg CO2</p>
+                      <p className="mt-2 text-sm font-medium text-emerald-800">
+                        Setara dengan menyelamatkan {calcTrees} pohon dewasa
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    className="mt-5 w-full"
+                    onClick={() => c.addCarbonRecord(calcTrees, calcCo2)}
+                  >
+                    <Check size={18} />
+                    Catat ke Metrik Kebanggaan Saya
+                  </Button>
+                </Card>
+              </div>
+            </div>
+          );
+        }
+
+        /* ================================================================== */
+        /*  Fitur 7: RecyHub (Community Hub, Crowdfunding TPS, Green Jobs)     */
+        /* ================================================================== */
+
+        function RecyHubPage({ c }) {
+          return (
+            <div className="space-y-5 lg:space-y-6">
+              <div className="grid gap-5 lg:grid-cols-12 lg:gap-6">
+                <Card className="p-5 lg:col-span-6 lg:p-6">
+                  <SectionTitle>Kampanye Bersih Desa & Relawan Pemuda</SectionTitle>
+                  <p className="mt-1 text-sm text-slate-500">Inisiatif aksi lingkungan lokal yang digerakkan oleh generasi muda.</p>
+                  <div className="mt-4 space-y-3">
+                    {HUB_CAMPAIGNS.map((cam) => {
+                      const isJoined = c.joinedHub.includes(cam.id);
+                      return (
+                        <div key={cam.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                          <div className="flex items-center justify-between text-xs text-slate-500">
+                            <span>{cam.date}</span>
+                            <span className="font-medium text-emerald-700">+{cam.pts} RecyPoin</span>
+                          </div>
+                          <h3 className="mt-1 text-sm font-semibold text-slate-900">{cam.title}</h3>
+                          <p className="mt-0.5 text-xs text-slate-500">Lokasi: {cam.area}</p>
+                          <div className="mt-3 flex items-center justify-between">
+                            <span className="text-xs font-medium text-slate-600">
+                              {cam.joined + (isJoined ? 1 : 0)} / {cam.target} relawan terdaftar
+                            </span>
+                            <Button
+                              size="sm"
+                              variant={isJoined ? "soft" : "primary"}
+                              onClick={() => c.toggleHubCampaign(cam)}
+                            >
+                              {isJoined ? "Terdaftar" : "Gabung Relawan"}
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Card>
+
+                <Card className="p-5 lg:col-span-6 lg:p-6">
+                  <SectionTitle>Crowdfunding Perbaikan TPS Desa</SectionTitle>
+                  <p className="mt-1 text-sm text-slate-500">Gotong royong pendanaan komunitas untuk peningkatan fasilitas TPS dan sensor IoT.</p>
+                  <div className="mt-4 space-y-3">
+                    {c.crowdfunds.map((cf) => {
+                      const pct = Math.min(100, Math.round((cf.raised / cf.goal) * 100));
+                      return (
+                        <div key={cf.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                          <h3 className="text-sm font-semibold text-slate-900">{cf.title}</h3>
+                          <p className="mt-1 text-xs text-slate-500">{cf.desc}</p>
+                          <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
+                            <div className="h-full rounded-full bg-emerald-500" style={{ width: `${pct}%` }} />
+                          </div>
+                          <div className="mt-2 flex items-center justify-between text-xs">
+                            <span className="font-semibold text-emerald-700">Rp {fmt(cf.raised)} ({pct}%)</span>
+                            <span className="text-slate-500">{cf.donors} donatur</span>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="soft"
+                            className="mt-3 w-full"
+                            onClick={() => c.donateHub(cf)}
+                          >
+                            Donasikan 200 RecyPoin (Rp 20.000)
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Card>
+              </div>
+
+              <Card className="p-5 lg:p-6">
+                <SectionTitle>Informasi Lowongan Pekerjaan Hijau (Green Jobs)</SectionTitle>
+                <p className="mt-1 text-sm text-slate-500">Peluang karier dan pemberdayaan ekonomi sirkular bagi talenta muda.</p>
+                <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                  {HUB_JOBS.map((job) => (
+                    <div key={job.id} className="flex flex-col justify-between rounded-2xl border border-slate-100 p-4">
+                      <div>
+                        <span className="inline-block rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                          {job.type}
+                        </span>
+                        <h3 className="mt-2.5 text-sm font-semibold text-slate-900">{job.title}</h3>
+                        <p className="mt-0.5 text-xs text-slate-500">{job.company} • {job.loc}</p>
+                        <p className="mt-2 text-xs font-semibold text-emerald-700">{job.pay}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        className="mt-4 w-full"
+                        onClick={() => c.showToast(`Lamaran ${c.user.name} untuk posisi ${job.title} terkirim`)}
+                      >
+                        Lamar Posisi
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
+          );
+        }
+
+        /* ================================================================== */
+        /*  Riwayat                                                            */
+        /* ================================================================== */
+
+        function HistoryPage({ c }) {
+          const [filter, setFilter] = useState("all");
+          const items = filter === "all" ? c.history : c.history.filter((i) => i.type === filter);
+          const earned = c.history.filter((i) => i.points > 0).reduce((a, i) => a + i.points, 0);
+          const spent = c.history.filter((i) => i.points < 0).reduce((a, i) => a + Math.abs(i.points), 0);
+          const filters = [
+            ["all", "Semua"],
+            ["setor", "Setor"],
+            ["jemput", "RecyPick"],
+            ["tukar", "RecyPoin"],
+            ["edu", "RecyLearn"],
+          ];
+
+          return (
+            <div className="space-y-5 lg:space-y-6">
+              <div className="grid grid-cols-3 gap-3 lg:gap-4">
+                {[
+                  ["Poin masuk", `+${fmt(earned)}`, "text-emerald-600"],
+                  ["Poin dipakai", `-${fmt(spent)}`, "text-slate-800"],
+                  ["Transaksi", fmt(c.history.length), "text-slate-800"],
+                ].map(([label, value, color]) => (
+                  <Card key={label} className="p-4 lg:p-5">
+                    <p className="text-xs text-slate-500 lg:text-sm">{label}</p>
+                    <p className={`mt-1 text-xl font-semibold tabular-nums tracking-tight lg:text-2xl ${color}`}>{value}</p>
+                  </Card>
+                ))}
+              </div>
+
+              <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 lg:mx-0 lg:px-0">
+                {filters.map(([id, label]) => (
+                  <div key={id} className="shrink-0">
+                    <Chip active={filter === id} onClick={() => setFilter(id)}>
+                      {label}
+                    </Chip>
+                  </div>
+                ))}
+              </div>
+
+              <Card className="px-5 py-2 lg:px-6">
+                {items.length === 0 ? (
+                  <div className="flex flex-col items-center py-10 text-center">
+                    <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                      <Recycle size={26} />
+                    </span>
+                    <p className="mt-4 text-sm font-semibold text-slate-900">Belum ada transaksi di kategori ini</p>
+                    <p className="mt-1 max-w-xs text-sm text-slate-500">Setor sampah pertamamu dan poinnya akan tercatat di sini.</p>
+                    <Button className="mt-4" onClick={() => c.openScan("mawar")}>
+                      <ScanLine size={18} />
+                      Scan QR Setor
+                    </Button>
+                  </div>
+                ) : (
+                  <ul className="divide-y divide-slate-100">
+                    {items.map((i) => (
+                      <HistoryRow key={i.id} item={i} />
+                    ))}
+                  </ul>
+                )}
+              </Card>
+            </div>
+          );
+        }
+
+        /* ================================================================== */
+        /*  Profil Diri (fiandhikaaa)                                          */
+        /* ================================================================== */
+
+        function ProfilePage({ c }) {
+          const [editing, setEditing] = useState(false);
+          const [draft, setDraft] = useState(c.user.name);
+          const lv = levelOf(c.totalEarned);
+          const badgeState = { kg: c.totalKg, rewards: ["pulsa10", ...c.redeemed.map((r) => r.rewardId)], edu: c.eduDone.length, trees: c.treesSaved };
+
+          const save = () => {
+            const name = draft.trim();
+            if (!name) return;
+            c.setUser((u) => ({ ...u, name }));
+            setEditing(false);
+            c.showToast("Nama profil diperbarui");
+          };
+
+          const stats = [
+            ["Total setoran", `${fmtKg(c.totalKg)} kg`, Recycle],
+            ["Pohon diselamatkan", `${c.treesSaved} pohon`, TreePine],
+            ["CO2 dihindari", `${fmtKg(c.carbonReduced)} kg`, Wind],
+            ["Modul RecyLearn", `${c.eduDone.length}/${EDU_MODULES.length}`, BookOpen],
+          ];
+
+          return (
+            <div className="grid gap-5 lg:grid-cols-12 lg:gap-6">
+              <div className="space-y-5 lg:col-span-5">
+                <Card className="p-5 lg:p-6">
+                  <div className="flex items-center gap-4">
+                    <Avatar src={c.avatarUrl} name={c.user.name} size={72} />
+                    <div className="min-w-0 flex-1">
+                      {editing ? (
+                        <div className="flex gap-2">
+                          <input
+                            value={draft}
+                            onChange={(e) => setDraft(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && save()}
+                            aria-label="Nama lengkap"
+                            autoFocus
+                            className="min-w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                          />
+                          <Button size="sm" onClick={save}>Simpan</Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <h2 className="truncate text-xl font-semibold tracking-tight text-slate-900">{c.user.name}</h2>
+                          <button
+                            type="button"
+                            aria-label="Ubah nama"
+                            onClick={() => {
+                              setDraft(c.user.name);
+                              setEditing(true);
+                            }}
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                          >
+                            <Pencil size={16} />
+                          </button>
+                        </div>
+                      )}
+                      <p className="mt-0.5 truncate text-sm text-slate-500">{c.user.email}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 rounded-2xl bg-emerald-50 p-4">
+                    <div className="flex items-center justify-between">
+                      <p className="flex items-center gap-2 text-sm font-semibold text-emerald-900">
+                        <Trophy size={16} className="text-emerald-600" />
+                        {lv.cur.name}
+                      </p>
+                      <p className="text-xs text-emerald-700">{fmt(c.totalEarned)} poin terkumpul</p>
+                    </div>
+                    <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white">
+                      <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.round(lv.pct * 100)}%`, transition: "width 0.8s ease-out" }} />
+                    </div>
+                    <p className="mt-2 text-xs text-emerald-700">
+                      {lv.next ? `${fmt(lv.next.min - c.totalEarned)} poin lagi menuju ${lv.next.name}` : "Level tertinggi tercapai"}
+                    </p>
+                  </div>
+                </Card>
+
+                <div className="grid grid-cols-2 gap-3">
+                  {stats.map(([label, value, Icon]) => (
+                    <Card key={label} className="p-4">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                        <Icon size={18} />
+                      </span>
+                      <p className="mt-3 text-lg font-semibold tabular-nums tracking-tight text-slate-900">{value}</p>
+                      <p className="text-xs text-slate-500">{label}</p>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-5 lg:col-span-7">
+                <Card className="p-5 lg:p-6">
+                  <SectionTitle>Lencana Pencapaian</SectionTitle>
+                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {BADGES.map((b) => {
+                      const got = b.test(badgeState);
+                      return (
+                        <div
+                          key={b.id}
+                          className={`rounded-2xl border p-4 ${got ? "border-emerald-200 bg-emerald-50" : "border-slate-100 bg-slate-50"}`}
+                        >
+                          <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${got ? "bg-emerald-600 text-white" : "bg-white text-slate-300"}`}>
+                            {got ? <b.Icon size={20} /> : <Lock size={18} />}
+                          </span>
+                          <p className={`mt-3 text-sm font-semibold ${got ? "text-emerald-900" : "text-slate-500"}`}>{b.name}</p>
+                          <p className={`text-xs ${got ? "text-emerald-700" : "text-slate-400"}`}>{got ? "Sudah diraih" : b.hint}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Card>
+
+                <Card className="p-5 lg:p-6">
+                  <SectionTitle>Pengaturan</SectionTitle>
+                  <ul className="mt-2 divide-y divide-slate-100">
+                    <li className="flex items-center justify-between gap-4 py-3.5">
+                      <div>
+                        <p className="text-sm font-medium text-slate-900">Notifikasi ambang 80% RecySense</p>
+                        <p className="text-xs text-slate-500">Beri tahu saat kapasitas sensor IoT TPS mencapai 80%</p>
+                      </div>
+                      <Toggle label="Notifikasi RecySense" on={c.settings.alerts} onChange={(v) => c.setSettings((s) => ({ ...s, alerts: v }))} />
+                    </li>
+                    <li className="flex items-center justify-between gap-4 py-3.5">
+                      <div>
+                        <p className="text-sm font-medium text-slate-900">Penjadwalan otomatis RecyPick</p>
+                        <p className="text-xs text-slate-500">Kabar saat armada penjemputan berkala dikonfirmasi</p>
+                      </div>
+                      <Toggle label="Pengingat RecyPick" on={c.settings.reminders} onChange={(v) => c.setSettings((s) => ({ ...s, reminders: v }))} />
+                    </li>
+                    <li className="flex items-center justify-between gap-4 py-3.5">
+                      <div>
+                        <p className="text-sm font-medium text-slate-900">Alamat penjemputan utama</p>
+                        <p className="text-xs text-slate-500">{c.user.address}</p>
+                      </div>
+                    </li>
+                  </ul>
+                  <div className="mt-3">
+                    <Button variant="ghost" onClick={c.onReset}>
+                      <RotateCcw size={16} />
+                      Atur ulang data demo
+                    </Button>
+                  </div>
+                </Card>
+              </div>
+            </div>
+          );
+        }
+
+        /* ================================================================== */
+        /*  Fitur 2: RecyPoin (Dompet Poin & Katalog Insentif)                 */
+        /* ================================================================== */
+
+        function RewardsPage({ c }) {
+          const [cat, setCat] = useState("all");
+          const list = cat === "all" ? REWARDS : REWARDS.filter((r) => r.cat === cat);
+          const cats = [["all", "Semua Insentif"], ["voucher", "Token Listrik & Pulsa"], ["sembako", "Potongan Sembako"], ["donasi", "Donasi Pohon"]];
+
+          const copy = async (code) => {
+            try {
+              await navigator.clipboard.writeText(code);
+              c.showToast("Kode disalin");
+            } catch (e) {
+              c.showToast(`Salin manual: ${code}`);
+            }
+          };
+
+          return (
+            <div className="space-y-5 lg:space-y-6">
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-700 p-5 text-white lg:p-6">
+                <svg aria-hidden="true" viewBox="0 0 200 200" fill="none" className="pointer-events-none absolute -right-12 -top-16 h-56 w-56">
+                  <circle cx="100" cy="100" r="95" stroke="#34d399" strokeWidth="1.2" opacity="0.5" />
+                  <circle cx="100" cy="100" r="62" stroke="#34d399" strokeWidth="1.2" opacity="0.4" />
+                  <circle cx="160" cy="40" r="5" fill="#a7f3d0" />
+                </svg>
+                <div className="relative flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm text-emerald-100">Saldo RecyPoin kamu</p>
+                    <p className="mt-1 flex items-baseline gap-2">
+                      <span className="text-3xl font-semibold tabular-nums tracking-tight">{fmt(c.points)}</span>
+                      <span className="text-sm text-emerald-100">poin</span>
+                    </p>
+                  </div>
+                  <Button variant="white" onClick={() => c.openScan("mawar")}>
+                    <ScanLine size={18} />
+                    Tambah poin
+                  </Button>
+                </div>
+              </div>
+
+              <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 lg:mx-0 lg:px-0">
+                {cats.map(([id, label]) => (
+                  <div key={id} className="shrink-0">
+                    <Chip active={cat === id} onClick={() => setCat(id)}>
+                      {label}
+                    </Chip>
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
+                {list.map((r) => {
+                  const afford = c.points >= r.cost;
+                  return (
+                    <Card key={r.id} className="flex flex-col overflow-hidden">
+                      <div className={`relative flex h-28 items-center justify-center ${CAT_GRAD[r.cat]}`}>
+                        <r.Icon size={44} className="text-white" />
+                        <span className="absolute left-3 top-3 rounded-lg px-2 py-1 text-xs font-medium text-white" style={{ background: "rgba(255,255,255,0.22)" }}>
+                          {CAT_LABEL[r.cat]}
+                        </span>
+                      </div>
+                      <div className="flex flex-1 flex-col p-4">
+                        <h3 className="text-sm font-semibold text-slate-900">{r.title}</h3>
+                        <p className="mt-1 text-xs leading-relaxed text-slate-500">{r.desc}</p>
+                        <div className="mt-auto pt-4">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="flex items-center gap-1.5 text-sm font-semibold tabular-nums text-slate-900">
+                              <Coins size={16} className="text-amber-500" />
+                              {fmt(r.cost)}
+                            </span>
+                            {afford ? (
+                              <Button size="sm" onClick={() => c.openReward(r)}>Tukar</Button>
+                            ) : (
+                              <span className="text-xs text-slate-500">Butuh {fmt(r.cost - c.points)} lagi</span>
+                            )}
+                          </div>
+                          {!afford && (
+                            <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                              <div className="h-full rounded-full bg-emerald-400" style={{ width: `${Math.round((c.points / r.cost) * 100)}%` }} />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+
+              {c.redeemed.length > 0 && (
+                <Card className="p-5 lg:p-6">
+                  <SectionTitle>Kode insentif RecyPoin saya</SectionTitle>
+                  <ul className="mt-2 divide-y divide-slate-100">
+                    {c.redeemed.map((r) => (
+                      <li key={r.id} className="flex items-center gap-3 py-3">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                          <Ticket size={18} />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-slate-900">{r.title}</p>
+                          <p className="font-mono text-xs text-slate-500">{r.code}</p>
+                        </div>
+                        <Button variant="soft" size="sm" onClick={() => copy(r.code)}>
+                          <Copy size={14} />
+                          Salin
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              )}
+            </div>
+          );
+        }
+
+        /* ================================================================== */
+        /*  Fitur 1: RecyLearn (Edukasi Visual & AI Pemilah Sampah)            */
+        /* ================================================================== */
+
+        function EduPage({ c }) {
+          const done = c.eduDone.length;
+          const total = EDU_MODULES.length;
+          const [elderFriendly, setElderFriendly] = useState(false);
+          const [query, setQuery] = useState("");
+          const [aiReply, setAiReply] = useState(
+            "Ketik nama benda rumah tangga (contoh: baterai bekas, botol plastik, kardus, atau sisa sayur) untuk mendapatkan panduan pemilahan instan dari AI RecyLearn."
+          );
+
+          const askAi = () => {
+            const q = query.trim().toLowerCase();
+            if (!q) return;
+            if (q.includes("baterai") || q.includes("lampu") || q.includes("kabel") || q.includes("hp") || q.includes("elektronik")) {
+              setAiReply("Panduan AI RecyLearn: Benda tersebut termasuk kategori Limbah Elektronik (E-Waste). Jangan dicampur dengan sampah dapur. Simpan di wadah kering tertutup dan jadwalkan penjemputan melalui RecyPick (+55 poin/kg).");
+            } else if (q.includes("botol") || q.includes("plastik") || q.includes("gelas")) {
+              setAiReply("Panduan AI RecyLearn: Benda tersebut termasuk Sampah Plastik (Wadah Kuning). Bilas sisa cairan, pipihkan botol untuk menghemat ruang, lalu setorkan ke TPS terdekat (+30 poin/kg).");
+            } else if (q.includes("sayur") || q.includes("nasi") || q.includes("buah") || q.includes("daun")) {
+              setAiReply("Panduan AI RecyLearn: Benda tersebut termasuk Sampah Organik (Wadah Hijau). Tiriskan airnya dan olah menjadi kompos atau pakan budidaya Maggot BSF (+10 poin/kg).");
+            } else {
+              setAiReply(`Panduan AI RecyLearn: Untuk "${query}", pastikan dipisahkan dalam kondisi bersih dan kering. Kertas/kardus masuk ke Wadah Biru (+20 poin/kg), sedangkan kemasan plastik masuk ke Wadah Kuning.`);
+            }
+            setQuery("");
+          };
+
+          return (
+            <div className="space-y-5 lg:space-y-6">
+              <Card className="p-5 lg:p-6">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">Asisten Visual & AI RecyLearn</p>
+                    <p className="mt-0.5 text-sm text-slate-500">
+                      Membantu warga dan generasi lansia mengenali jenis sampah organik, plastik, kertas, hingga e-waste
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xs font-medium text-slate-600">Mode Teks Besar (Lansia)</span>
+                    <Toggle label="Mode Ramah Lansia" on={elderFriendly} onChange={setElderFriendly} />
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-2xl bg-emerald-50 p-4">
+                  <p className={`text-emerald-950 ${elderFriendly ? "text-base font-medium leading-relaxed" : "text-sm leading-relaxed"}`}>
+                    {aiReply}
+                  </p>
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                    <input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && askAi()}
+                      placeholder="Tanya AI RecyLearn (misal: baterai remot, botol sampo, sisa sayur)..."
+                      className="flex-1 rounded-xl border border-emerald-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none"
+                    />
+                    <Button size="sm" onClick={askAi}>
+                      Tanya AI RecyLearn
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="mt-5 flex items-center justify-between gap-4 border-t border-slate-100 pt-4">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">Progres Modul Interaktif</p>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      {done === total ? "Semua modul selesai." : `${done} dari ${total} modul selesai`}
+                    </p>
+                  </div>
+                  <span className="rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                    {EDU_MODULES.filter((m) => !c.eduDone.includes(m.id)).reduce((a, m) => a + m.pts, 0)} poin tersisa
+                  </span>
+                </div>
+                <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-full rounded-full bg-emerald-500" style={{ width: `${(done / total) * 100}%`, transition: "width 0.8s ease-out" }} />
+                </div>
+              </Card>
+
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2 lg:gap-5">
+                {EDU_MODULES.map((m) => {
+                  const isDone = c.eduDone.includes(m.id);
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => c.openEdu(m)}
+                      className="flex transform flex-col rounded-2xl border border-slate-100 bg-white p-5 text-left transition hover:-translate-y-0.5 hover:border-emerald-200 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                      style={{ boxShadow: SHADOW.card }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ${isDone ? "bg-emerald-600 text-white" : "bg-lime-50 text-lime-700"}`}>
+                          {isDone ? <Check size={22} strokeWidth={3} /> : <m.Icon size={22} />}
+                        </span>
+                        <span className="text-xs text-slate-400">{m.dur}</span>
+                      </div>
+                      <h3 className={`mt-4 font-semibold text-slate-900 ${elderFriendly ? "text-lg" : "text-sm lg:text-base"}`}>{m.title}</h3>
+                      <p className={`mt-1 leading-relaxed text-slate-500 ${elderFriendly ? "text-sm" : "text-xs lg:text-sm"}`}>{m.desc}</p>
+                      <p className={`mt-4 flex items-center gap-1.5 text-sm font-medium ${isDone ? "text-emerald-700" : "text-slate-700"}`}>
+                        {isDone ? (
+                          "Selesai"
+                        ) : (
+                          <>
+                            <Coins size={16} className="text-amber-500" />+{m.pts} poin
+                          </>
+                        )}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        }
+
+        /* ================================================================== */
+        /*  Modal / Bottom Sheet                                               */
+        /* ================================================================== */
+
+        function FieldLabel({ children }) {
+          return <p className="mb-2 mt-5 text-sm font-medium text-slate-700">{children}</p>;
+        }
+
+        /* ------------------- Fitur 3: RecyPick Modal ----------------------- */
+
+        function PickupModal({ initialTypes, address: addr0, onSubmit, onClose }) {
+          const [dates] = useState(dateOptions);
+          const [types, setTypes] = useState(initialTypes.length ? initialTypes : ["plastik"]);
+          const [kg, setKg] = useState(4);
+          const [destType, setDestType] = useState("Rumah Warga");
+          const [autoMode, setAutoMode] = useState(true);
+          const [autoScheduleText, setAutoScheduleText] = useState("Otomatis Setiap Selasa & Jumat");
+          const [dateIdx, setDateIdx] = useState(1);
+          const [slot, setSlot] = useState(1);
+          const [address, setAddress] = useState(addr0);
+
+          const toggle = (k) => setTypes((t) => (t.includes(k) ? t.filter((x) => x !== k) : [...t, k]));
+          const avgRate = types.length ? types.reduce((a, k) => a + WASTE[k].rate, 0) / types.length : 0;
+          const est = Math.round(kg * avgRate);
+          const valid = types.length > 0 && address.trim().length > 3;
+
+          return (
+            <Sheet title="RecyPick — Panggil Armada Pengangkut" onClose={onClose}>
+              <p className="text-sm text-slate-500">
+                Panggil armada ke rumah atau rumah sakit, atau aktifkan penjadwalan berkala otomatis tanpa campur tangan manual.
+              </p>
+
+              <FieldLabel>Titik lokasi penjemputan</FieldLabel>
+              <div className="flex flex-wrap gap-2">
+                {["Rumah Warga", "Rumah Sakit / Klinik", "Bank Sampah Desa"].map((loc) => (
+                  <Chip
+                    key={loc}
+                    active={destType === loc}
+                    onClick={() => {
+                      setDestType(loc);
+                      if (loc === "Rumah Sakit / Klinik") setAddress("RSUD Harapan Sehat, Jl. Karang Menjangan");
+                      else if (loc === "Rumah Warga") setAddress(addr0);
+                    }}
+                  >
+                    {loc}
+                  </Chip>
+                ))}
+              </div>
+
+              <FieldLabel>Jenis sampah terpilah</FieldLabel>
+              <div className="flex flex-wrap gap-2">
+                {PICKUP_TYPES.map((k) => (
+                  <Chip key={k} active={types.includes(k)} onClick={() => toggle(k)}>
+                    {WASTE[k].label}
+                  </Chip>
+                ))}
+              </div>
+
+              <FieldLabel>Perkiraan berat</FieldLabel>
+              <Stepper value={kg} onChange={setKg} min={1} max={100} step={1} unit="kg" />
+
+              <div className="mt-5 flex items-center justify-between rounded-2xl border border-emerald-100 bg-emerald-50/70 p-3.5">
+                <div>
+                  <p className="text-sm font-semibold text-emerald-950">Penjadwalan Berkala Otomatis</p>
+                  <p className="text-xs text-emerald-700">Sistem menjadwalkan armada secara rutin tanpa input manual</p>
+                </div>
+                <Toggle label="Jadwal Otomatis" on={autoMode} onChange={setAutoMode} />
+              </div>
+
+              {autoMode ? (
+                <>
+                  <FieldLabel>Frekuensi otomatis</FieldLabel>
+                  <div className="grid grid-cols-1 gap-2">
+                    {[
+                      "Otomatis Setiap Selasa & Jumat",
+                      "Otomatis Setiap Pekan (Senin Pagi)",
+                      "Otomatis Saat Sensor RecySense Mencapai 80%",
+                    ].map((freq) => (
+                      <Chip key={freq} active={autoScheduleText === freq} onClick={() => setAutoScheduleText(freq)}>
+                        {freq}
+                      </Chip>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <FieldLabel>Tanggal penjemputan</FieldLabel>
+                  <div className="grid grid-cols-4 gap-2">
+                    {dates.map((d) => {
+                      const active = d.id === dateIdx;
+                      return (
+                        <button
+                          key={d.id}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => setDateIdx(d.id)}
+                          className={`rounded-xl border px-1 py-2.5 text-center transition active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                            active ? "border-emerald-600 bg-emerald-600 text-white" : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300"
+                          }`}
+                        >
+                          <span className="block text-sm font-semibold">{d.label}</span>
+                          <span className={`block text-xs ${active ? "text-emerald-100" : "text-slate-400"}`}>{d.sub}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+
+              <FieldLabel>Jam jemput armada</FieldLabel>
+              <div className="grid grid-cols-2 gap-2">
+                {SLOTS.map((s, i) => (
+                  <Chip key={s} active={slot === i} onClick={() => setSlot(i)}>
+                    {s}
+                  </Chip>
+                ))}
+              </div>
+
+              <FieldLabel>Alamat lengkap</FieldLabel>
+              <div className="relative">
+                <MapPin size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 transform text-slate-400" />
+                <input
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  aria-label="Alamat penjemputan"
+                  className="w-full rounded-xl border border-slate-200 py-3 pl-10 pr-3.5 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus-visible:ring-emerald-100"
+                />
+              </div>
+
+              <div className="mt-5 flex items-center gap-3 rounded-2xl bg-emerald-50 p-4">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-amber-500">
+                  <Coins size={20} />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-emerald-900">Estimasi sekitar {fmt(est)} RecyPoin</p>
+                  <p className="text-xs text-emerald-700">Poin masuk ke dompet RecyPoin setelah ditimbang petugas.</p>
+                </div>
+              </div>
+
+              <Button
+                className="mt-5 w-full"
+                disabled={!valid}
+                onClick={() =>
+                  onSubmit({
+                    types,
+                    kg,
+                    destType,
+                    dateLabel: autoMode ? autoScheduleText : dates[dateIdx].full,
+                    slot: SLOTS[slot],
+                    address: address.trim(),
+                    autoMode,
+                  })
+                }
+              >
+                <Truck size={18} />
+                Konfirmasi Armada RecyPick
+              </Button>
+            </Sheet>
+          );
+        }
+
+        /* ---------------------------- Scan QR Setor ------------------------- */
+
+        function FakeQR({ lit }) {
+          const n = 11;
+          const cells = [];
+          for (let i = 0; i < n; i++) {
+            for (let j = 0; j < n; j++) {
+              const inFinder = (i < 3 && j < 3) || (i < 3 && j > n - 4) || (i > n - 4 && j < 3);
+              if (!inFinder && (i * 5 + j * 7 + i * j) % 3 === 0) {
+                cells.push(<rect key={`${i}-${j}`} x={j * 10} y={i * 10} width="8" height="8" rx="1.5" />);
+              }
+            }
+          }
+          const finder = (x, y) => (
+            <g key={`${x}-${y}`}>
+              <rect x={x + 2} y={y + 2} width="26" height="26" rx="5" fill="none" strokeWidth="4" />
+              <rect x={x + 10} y={y + 10} width="10" height="10" rx="2" />
+            </g>
+          );
+          const color = lit ? "#6ee7b7" : "#94a3b8";
+          return (
+            <svg viewBox="0 0 110 110" className="h-full w-full" fill={color} stroke={color} style={{ opacity: lit ? 0.95 : 0.4, transition: "opacity .3s" }}>
+              <g stroke="none">{cells}</g>
+              {finder(0, 0)}
+              {finder(80, 0)}
+              {finder(0, 80)}
+            </svg>
+          );
+        }
+
+        function ScanModal({ sites, initialSiteId, onDeposit, onClose }) {
+          const [step, setStep] = useState("scan");
+          const [siteIdx, setSiteIdx] = useState(Math.max(0, sites.findIndex((s) => s.id === initialSiteId)));
+          const detections = useRef(0);
+          const [type, setType] = useState("plastik");
+          const [kg, setKg] = useState(2);
+          const [result, setResult] = useState(null);
+
+          const site = sites[siteIdx];
+          const w = WASTE[type];
+          const binLevel = site.bins[w.bin];
+          const full = binLevel >= 100;
+          const pts = Math.round(kg * w.rate);
+
+          useEffect(() => {
+            if (step !== "scanning") return undefined;
+            const id = setTimeout(() => {
+              if (detections.current > 0) setSiteIdx((i) => (i + 1) % sites.length);
+              detections.current += 1;
+              setStep("form");
+            }, 1400);
+            return () => clearTimeout(id);
+          }, [step, sites.length]);
+
+          const titles = { scan: "Scan QR Setor RecyGO", scanning: "Memindai QR TPS", form: "Detail Setoran Sampah", done: "Setoran Berhasil" };
+
+          return (
+            <Sheet title={titles[step]} onClose={onClose}>
+              {(step === "scan" || step === "scanning") && (
+                <div>
+                  <p className="text-sm text-slate-500">Arahkan kamera ke kode QR pada tempat sampah komunal berteknologi RecySense.</p>
+                  <div
+                    className="relative mx-auto mt-4 w-full max-w-xs overflow-hidden rounded-3xl bg-slate-900"
+                    style={{ aspectRatio: "1 / 1" }}
+                  >
+                    <div className="absolute inset-0 flex items-center justify-center p-12">
+                      <FakeQR lit={step === "scanning"} />
+                    </div>
+                    <span className="absolute left-5 top-5 h-9 w-9 rounded-tl-2xl border-l-4 border-t-4 border-emerald-400" />
+                    <span className="absolute right-5 top-5 h-9 w-9 rounded-tr-2xl border-r-4 border-t-4 border-emerald-400" />
+                    <span className="absolute bottom-5 left-5 h-9 w-9 rounded-bl-2xl border-b-4 border-l-4 border-emerald-400" />
+                    <span className="absolute bottom-5 right-5 h-9 w-9 rounded-br-2xl border-b-4 border-r-4 border-emerald-400" />
+                    {step === "scanning" && (
+                      <div className="eco-scan absolute inset-x-6 h-0.5 rounded-full bg-emerald-400" style={{ boxShadow: "0 0 18px 2px #34d399" }} />
+                    )}
+                  </div>
+                  <p className="mt-4 text-center text-sm font-medium text-slate-700" aria-live="polite">
+                    {step === "scanning" ? "Membaca kode QR..." : "Kamera siap"}
+                  </p>
+                  <Button className="mt-4 w-full" disabled={step === "scanning"} onClick={() => setStep("scanning")}>
+                    <ScanLine size={18} />
+                    {step === "scanning" ? "Memindai" : "Simulasikan scan"}
+                  </Button>
+                </div>
+              )}
+
+              {step === "form" && (
+                <div>
+                  <div className="flex items-center gap-3 rounded-2xl bg-emerald-50 p-3.5">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-600">
+                      <BadgeCheck size={20} />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-emerald-900">{site.name}</p>
+                      <p className="text-xs text-emerald-700">Sensor RecySense terhubung, {site.area}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setStep("scan")}
+                      className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-emerald-700 transition hover:bg-white"
+                    >
+                      Scan TPS lain
+                    </button>
+                  </div>
+
+                  <FieldLabel>Jenis sampah terpilah</FieldLabel>
+                  <div className="grid grid-cols-3 gap-2">
+                    {Object.keys(WASTE).map((k) => {
+                      const active = k === type;
+                      return (
+                        <button
+                          key={k}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => setType(k)}
+                          className={`rounded-xl border p-3 text-left transition active:scale-95 ${
+                            active ? "border-emerald-600 bg-emerald-50" : "border-slate-200 bg-white hover:border-emerald-300"
+                          }`}
+                        >
+                          <span className={`block text-sm font-semibold ${active ? "text-emerald-900" : "text-slate-800"}`}>{WASTE[k].label}</span>
+                          <span className={`block text-xs ${active ? "text-emerald-700" : "text-slate-500"}`}>{WASTE[k].rate} poin/kg</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <FieldLabel>Berat setoran</FieldLabel>
+                  <Stepper value={kg} onChange={setKg} min={0.5} max={50} step={0.5} unit="kg" />
+
+                  <p className={`mt-3 flex items-center gap-1.5 text-xs ${full ? "text-rose-600" : binLevel >= 80 ? "text-amber-700" : "text-slate-500"}`}>
+                    <Info size={14} />
+                    {full
+                      ? `Wadah ${BIN_LABEL[w.bin].toLowerCase()} sudah penuh. Silakan pilih TPS lain.`
+                      : `Kapasitas wadah ${BIN_LABEL[w.bin].toLowerCase()} saat ini ${binLevel}%.`}
+                  </p>
+
+                  <div className="mt-4 flex items-center justify-between rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 p-4 text-white">
+                    <div>
+                      <p className="text-xs text-emerald-100">Tambahan RecyPoin</p>
+                      <p className="text-2xl font-semibold tabular-nums tracking-tight">+{fmt(pts)} poin</p>
+                    </div>
+                    <p className="text-xs text-emerald-100">Setara Rp {fmt(pts * POINT_VALUE)}</p>
+                  </div>
+
+                  <Button
+                    className="mt-4 w-full"
+                    disabled={full}
+                    onClick={() => {
+                      setResult(onDeposit({ siteId: site.id, type, kg }));
+                      setStep("done");
+                    }}
+                  >
+                    <Check size={18} />
+                    Konfirmasi setor
+                  </Button>
+                </div>
+              )}
+
+              {step === "done" && result && (
+                <div className="flex flex-col items-center pt-2 text-center">
+                  <span className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-600 text-white" style={{ boxShadow: "0 10px 24px rgba(5,150,105,0.35)" }}>
+                    <Check size={32} strokeWidth={3} />
+                  </span>
+                  <p className="mt-4 text-3xl font-semibold tabular-nums tracking-tight text-slate-900">+{fmt(result.pts)} poin</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {result.w.label} {fmtKg(result.kg)} kg di {result.site.name}
+                  </p>
+                  <p className="mt-3 max-w-xs rounded-xl bg-slate-50 px-4 py-3 text-xs text-slate-500">
+                    Data sensor RecySense dan kalkulator jejak karbon RecyTrack otomatis diperbarui.
+                  </p>
+                  <div className="mt-5 grid w-full grid-cols-2 gap-2.5">
+                    <Button variant="ghost" onClick={() => setStep("form")}>Setor lagi</Button>
+                    <Button onClick={onClose}>Selesai</Button>
+                  </div>
+                </div>
+              )}
+            </Sheet>
+          );
+        }
+
+        /* ------------------------------ Reward ------------------------------ */
+
+        function RewardModal({ reward, points, onConfirm, onCopy, onClose }) {
+          const [code, setCode] = useState(null);
+          const after = points - reward.cost;
+
+          return (
+            <Sheet title={code ? "Penukaran RecyPoin Berhasil" : "Tukar Insentif RecyPoin"} onClose={onClose}>
+              <div className={`flex h-24 items-center justify-center rounded-2xl ${CAT_GRAD[reward.cat]}`}>
+                <reward.Icon size={40} className="text-white" />
+              </div>
+              <h3 className="mt-4 text-base font-semibold text-slate-900">{reward.title}</h3>
+              <p className="mt-1 text-sm text-slate-500">{reward.desc}</p>
+
+              {!code ? (
+                <>
+                  <div className="mt-4 divide-y divide-slate-100 rounded-2xl border border-slate-100">
+                    {[
+                      ["Saldo RecyPoin sekarang", `${fmt(points)} poin`],
+                      ["Poin penukaran", `-${fmt(reward.cost)} poin`],
+                      ["Sisa saldo", `${fmt(after)} poin`],
+                    ].map(([k, v], i) => (
+                      <div key={k} className="flex items-center justify-between px-4 py-3 text-sm">
+                        <span className="text-slate-500">{k}</span>
+                        <span className={`font-semibold tabular-nums ${i === 2 ? "text-emerald-700" : "text-slate-900"}`}>{v}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-5 grid grid-cols-2 gap-2.5">
+                    <Button variant="ghost" onClick={onClose}>Batal</Button>
+                    <Button onClick={() => setCode(onConfirm(reward))}>Tukar sekarang</Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="mt-4 rounded-2xl border border-dashed border-emerald-300 bg-emerald-50 p-4 text-center">
+                    <p className="text-xs text-emerald-700">Kode voucher / token kamu</p>
+                    <p className="mt-1 font-mono text-xl font-semibold tracking-wider text-emerald-900">{code}</p>
+                  </div>
+                  <div className="mt-5 grid grid-cols-2 gap-2.5">
+                    <Button variant="soft" onClick={() => onCopy(code)}>
+                      <Copy size={16} />
+                      Salin kode
+                    </Button>
+                    <Button onClick={onClose}>Selesai</Button>
+                  </div>
+                </>
+              )}
+            </Sheet>
+          );
+        }
+
+        /* ------------------------------ B2B Modal --------------------------- */
+
+        function B2BModal({ product, onConfirm, onClose }) {
+          const [orderKg, setOrderKg] = useState(product.minKg);
+          const [buyerName, setBuyerName] = useState("PT Polimer Sirkular Nusantara");
+          const totalHarga = orderKg * product.price;
+
+          return (
+            <Sheet title="Pemesanan B2B RecyMart" onClose={onClose}>
+              <div className="h-36 w-full overflow-hidden rounded-2xl">
+                <MartProductImage type={product.imageType} />
+              </div>
+              <h3 className="mt-4 text-base font-semibold text-slate-900">{product.title}</h3>
+              <p className="mt-0.5 text-xs text-emerald-700">Mitra pemasok: {product.seller}</p>
+              <p className="mt-1 text-sm text-slate-500">{product.desc}</p>
+
+              <FieldLabel>Nama perusahaan / peternak pembeli</FieldLabel>
+              <input
+                value={buyerName}
+                onChange={(e) => setBuyerName(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none"
+              />
+
+              <FieldLabel>Kuantitas pemesanan (Min. {product.minKg} kg)</FieldLabel>
+              <Stepper value={orderKg} onChange={setOrderKg} min={product.minKg} max={product.stockKg} step={25} unit="kg" />
+
+              <div className="mt-4 flex items-center justify-between rounded-2xl bg-emerald-50 p-4">
+                <div>
+                  <p className="text-xs text-emerald-700">Total nilai transaksi B2B</p>
+                  <p className="text-xl font-semibold tabular-nums text-emerald-950">Rp {fmt(totalHarga)}</p>
+                </div>
+                <span className="text-xs text-emerald-700">Rp {fmt(product.price)} / kg</span>
+              </div>
+
+              <Button
+                className="mt-5 w-full"
+                onClick={() => {
+                  onConfirm(product, orderKg, buyerName);
+                  onClose();
+                }}
+              >
+                <Check size={18} />
+                Ajukan Kontrak Pembelian B2B
+              </Button>
+            </Sheet>
+          );
+        }
+
+        /* ------------------------------- Edu -------------------------------- */
+
+        function EduModal({ mod, done, onComplete, onClose }) {
+          return (
+            <Sheet title={mod.title} onClose={onClose}>
+              <p className="text-sm leading-relaxed text-slate-600">{mod.intro}</p>
+              <ol className="mt-4 space-y-3">
+                {mod.steps.map((s, i) => (
+                  <li key={s} className="flex gap-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xs font-semibold text-emerald-700">{i + 1}</span>
+                    <p className="text-sm leading-relaxed text-slate-700">{s}</p>
+                  </li>
+                ))}
+              </ol>
+              <div className="mt-5 flex items-start gap-3 rounded-2xl bg-lime-50 p-4">
+                <Info size={18} className="mt-0.5 shrink-0 text-lime-700" />
+                <p className="text-sm leading-relaxed text-lime-900">{mod.tip}</p>
+              </div>
+              <Button
+                className="mt-5 w-full"
+                disabled={done}
+                onClick={() => {
+                  onComplete(mod);
+                  onClose();
+                }}
+              >
+                <Check size={18} />
+                {done ? "Sudah selesai" : `Tandai selesai, dapat +${mod.pts} RecyPoin`}
+              </Button>
+            </Sheet>
+          );
+        }
+
+        /* ---------------------------- Notifikasi ---------------------------- */
+
+        const NOTIF_ICON = {
+          alert: { Icon: AlertTriangle, tile: "bg-amber-50 text-amber-600" },
+          ok: { Icon: CheckCircle2, tile: "bg-emerald-50 text-emerald-600" },
+          info: { Icon: Info, tile: "bg-teal-50 text-teal-600" },
+        };
+
+        function NotifSheet({ notifs, onReadAll, onGo, onClose }) {
+          const unread = notifs.filter((n) => !n.read).length;
+          return (
+            <Sheet title="Notifikasi RecyGO" onClose={onClose}>
+              {unread > 0 && (
+                <button
+                  type="button"
+                  onClick={onReadAll}
+                  className="mb-3 rounded-lg px-1 py-1 text-sm font-medium text-emerald-700 hover:underline focus:outline-none"
+                >
+                  Tandai semua dibaca
+                </button>
+              )}
+              <ul className="space-y-2">
+                {notifs.map((n) => {
+                  const m = NOTIF_ICON[n.kind] || NOTIF_ICON.info;
+                  return (
+                    <li key={n.id}>
+                      <button
+                        type="button"
+                        onClick={() => onGo(n)}
+                        className={`flex w-full items-start gap-3 rounded-2xl p-3 text-left transition ${
+                          n.read ? "bg-white hover:bg-slate-50" : "bg-emerald-50"
+                        }`}
+                      >
+                        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${m.tile}`}>
+                          <m.Icon size={18} />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-semibold text-slate-900">{n.title}</span>
+                          <span className="mt-0.5 block text-xs leading-relaxed text-slate-500">{n.body}</span>
+                          <span className="mt-1 block text-xs text-slate-400">{n.time}</span>
+                        </span>
+                        {!n.read && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-500" />}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </Sheet>
+          );
+        }
+
+        /* ================================================================== */
+        /*  Layout: Sidebar (Desktop), Header, Bottom Nav (Ponsel)             */
+        /* ================================================================== */
+
+        const GLOBAL_CSS = `
+        @keyframes ecoFade { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes ecoSheet { from { opacity: 0; transform: translateY(24px) } to { opacity: 1; transform: none } }
+        @keyframes ecoScan { 0% { top: 8% } 50% { top: 88% } 100% { top: 8% } }
+        @keyframes ecoToast { from { opacity: 0; transform: translateY(-8px) } to { opacity: 1; transform: none } }
+        .eco-fade { animation: ecoFade .2s ease-out }
+        .eco-sheet { animation: ecoSheet .28s cubic-bezier(.2,.8,.2,1) }
+        .eco-scan { animation: ecoScan 2s ease-in-out infinite }
+        .eco-toast { animation: ecoToast .25s ease-out }
+        @media (prefers-reduced-motion: reduce) {
+          .eco-fade, .eco-sheet, .eco-scan, .eco-toast { animation: none }
+        }
+        `;
+
+        function Sidebar({ tab, user, avatarUrl, totalEarned, onTab, onRun }) {
+          const lv = levelOf(totalEarned);
+          const itemClass = (active) =>
+            `relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+              active ? "bg-emerald-50 font-semibold text-emerald-700" : "font-medium text-slate-600 hover:bg-slate-50"
+            }`;
+          const bar = <span className="absolute bottom-2 left-0 top-2 w-1 rounded-r-full bg-emerald-600" />;
+
+          return (
+            <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-slate-100 bg-white p-5 lg:flex">
+              {/* Klik Logo RecyGO untuk kembali ke Beranda */}
+              <button
+                type="button"
+                onClick={() => onTab("home")}
+                className="rounded-2xl p-1 text-left transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+              >
+                <RecyGoBrandMark size={44} showWordmark={true} />
+              </button>
+
+              <p className="mb-2 mt-7 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">7 Fitur RecyGO</p>
+              <nav aria-label="7 Fitur RecyGO" className="space-y-1 overflow-y-auto">
+                {SERVICES.slice(0, 7).map(({ id, label }) => {
+                  const active = tab === id;
+                  return (
+                    <button key={id} type="button" onClick={() => onRun(id)} aria-current={active ? "page" : undefined} className={itemClass(active)}>
+                      {active && bar}
+                      <FeatureIcon id={id} size={20} />
+                      {label}
+                    </button>
+                  );
+                })}
+              </nav>
+
+              <button
+                type="button"
+                onClick={() => onTab("profile")}
+                className="mt-auto flex w-full items-center gap-3 rounded-2xl bg-emerald-50 p-3 text-left transition hover:bg-emerald-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+              >
+                <Avatar src={avatarUrl} name={user.name} size={40} />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold text-emerald-900">{user.name}</span>
+                  <span className="block truncate text-xs text-emerald-700">{lv.cur.name}</span>
+                  <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-white">
+                    <span className="block h-full rounded-full bg-emerald-500" style={{ width: `${Math.round(lv.pct * 100)}%` }} />
+                  </span>
+                </span>
+              </button>
+            </aside>
+          );
+        }
+
+        function Header({ tab, firstName, name, avatarUrl, unread, onBell, onHistory, onProfile, onBack }) {
+          const isHome = tab === "home";
+          const meta = PAGE_META[tab] || { title: "RecyGO", sub: "Smart Waste to Resource" };
+          const today = new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+
+          return (
+            <header className="flex items-center justify-between gap-3 pt-8">
+              <div className="flex min-w-0 items-center gap-3">
+                {isHome ? (
+                  <button type="button" onClick={onProfile} aria-label="Buka profil" className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 lg:hidden">
+                    <Avatar src={avatarUrl} name={name} size={48} />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={onBack}
+                    aria-label="Kembali ke beranda"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-100 bg-white text-slate-600 transition hover:bg-emerald-50 hover:text-emerald-700 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                    style={{ boxShadow: SHADOW.card }}
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                )}
+                <div className="min-w-0">
+                  {isHome ? (
+                    <>
+                      <p className="text-sm text-slate-500">
+                        {getGreeting()}
+                        <span className="hidden lg:inline">, {today}</span>
+                      </p>
+                      <h1 className="truncate text-xl font-semibold tracking-tight text-slate-900 lg:text-3xl">Halo, {firstName}</h1>
+                    </>
+                  ) : (
+                    <>
+                      <h1 className="truncate text-xl font-semibold tracking-tight text-slate-900 lg:text-3xl">{meta.title}</h1>
+                      <p className="hidden text-sm text-slate-500 sm:block">{meta.sub}</p>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={onHistory}
+                  aria-label="Riwayat aktivitas"
+                  title="Riwayat aktivitas"
+                  className={`flex h-11 w-11 items-center justify-center rounded-xl border border-slate-100 bg-white transition active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                    tab === "history" ? "text-emerald-600" : "text-slate-600 hover:text-emerald-700"
+                  }`}
+                  style={{ boxShadow: SHADOW.card }}
+                >
+                  <History size={20} />
+                </button>
+                <button
+                  type="button"
+                  onClick={onBell}
+                  aria-label={unread > 0 ? `Notifikasi, ${unread} belum dibaca` : "Notifikasi"}
+                  className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-slate-100 bg-white text-slate-600 transition active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                  style={{ boxShadow: SHADOW.card }}
+                >
+                  <Bell size={20} />
+                  {unread > 0 && (
+                    <span
+                      className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-emerald-600 font-semibold text-white"
+                      style={{ fontSize: 10 }}
+                    >
+                      {unread > 9 ? "9+" : unread}
+                    </span>
+                  )}
+                </button>
+                <button type="button" onClick={onProfile} aria-label="Buka profil" className="hidden rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 lg:block">
+                  <Avatar src={avatarUrl} name={name} size={44} />
+                </button>
+              </div>
+            </header>
+          );
+        }
+
+        function BottomNav({ tab, onTab }) {
+          return (
+            <div
+              className="pointer-events-none fixed inset-x-0 bottom-0 z-20 mx-auto max-w-xl px-4 lg:hidden"
+              style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+            >
+              <nav
+                aria-label="Navigasi utama"
+                className="pointer-events-auto flex gap-1 rounded-2xl border border-slate-100 bg-white p-2"
+                style={{ boxShadow: "0 10px 32px rgba(15, 23, 42, 0.12)" }}
+              >
+                {MOBILE_NAV.map(({ id, short, label, Icon }) => {
+                  const active = id === tab;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => onTab(id)}
+                      aria-label={label}
+                      aria-current={active ? "page" : undefined}
+                      className={`flex flex-1 flex-col items-center gap-1 rounded-xl py-2 text-xs font-medium transition active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                        active ? "bg-emerald-50 text-emerald-700" : "text-slate-400 hover:text-slate-600"
+                      }`}
+                    >
+                      <Icon size={22} strokeWidth={active ? 2.4 : 1.8} />
+                      {short}
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+          );
+        }
+
+        /* ================================================================== */
+        /*  Aplikasi: State dan Aksi                                           */
+        /* ================================================================== */
+
+        function Dashboard({ avatarUrl, onReset }) {
+          const [tab, setTab] = useState("home");
+          const [user, setUser] = useState({ name: "fiandhikaaa", email: "fiandhikaaa@recygo.id", address: "Jl. Mawar No. 12, RW 05" });
+          const [points, setPoints] = useState(2450);
+          const [totalEarned, setTotalEarned] = useState(3150);
+          const [totalKg, setTotalKg] = useState(86.4);
+          const [monthKg, setMonthKg] = useState(27.5);
+          const [treesSaved, setTreesSaved] = useState(15);
+          const [carbonReduced, setCarbonReduced] = useState(5.0);
+          const [weekly, setWeekly] = useState(() => [4.5, 3.2, 6.0, 2.8, 5.4, 7.1, 3.9].map((v, i) => (i < TODAY_IDX ? v : i === TODAY_IDX ? 2.5 : 0)));
+          const [history, setHistory] = useState(HISTORY_SEED);
+          const [sites, setSites] = useState(SITES_SEED);
+          const [syncAt, setSyncAt] = useState(Date.now());
+          const [pickups, setPickups] = useState([]);
+          const [redeemed, setRedeemed] = useState([]);
+          const [eduDone, setEduDone] = useState(["dasar"]);
+          const [joinedHub, setJoinedHub] = useState(["c1"]);
+          const [crowdfunds, setCrowdfunds] = useState(HUB_CROWDFUND);
+          const [notifs, setNotifs] = useState(NOTIF_SEED);
+          const [settings, setSettings] = useState({ alerts: true, reminders: true });
+          const [requested, setRequested] = useState([]);
+          const [selectedSite, setSelectedSite] = useState("mawar");
+          const [modal, setModal] = useState(null);
+          const [toasts, setToasts] = useState([]);
+
+          const sitesRef = useRef(sites);
+          sitesRef.current = sites;
+          const settingsRef = useRef(settings);
+          settingsRef.current = settings;
+          const cancelledRef = useRef(new Set());
+
+          const firstName = user.name.trim().split(" ")[0] || "fiandhikaaa";
+
+          const showToast = (msg) => {
+            const id = uid();
+            setToasts((t) => [...t, { id, msg }]);
+            setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3200);
+          };
+          const addHistory = (item) => setHistory((h) => [{ id: uid(), time: nowLabel(), status: null, ...item }, ...h]);
+          const pushNotif = (title, body, kind = "info", go = null) =>
+            setNotifs((n) => [{ id: uid(), kind, title, body, time: "Baru saja", read: false, go }, ...n]);
+
+          useEffect(() => {
+            window.scrollTo(0, 0);
+          }, [tab]);
+
+          useEffect(() => {
+            const id = setInterval(() => {
+              const list = sitesRef.current;
+              const s = list[Math.floor(Math.random() * list.length)];
+              const keys = Object.keys(s.bins);
+              const k = keys[Math.floor(Math.random() * keys.length)];
+              const cur = s.bins[k];
+              if (cur < 99 && Math.random() < 0.6) {
+                setSites((l) => l.map((x) => (x.id === s.id && x.bins[k] < 99 ? { ...x, bins: { ...x.bins, [k]: x.bins[k] + 1 } } : x)));
+                if (cur + 1 === 80 && settingsRef.current.alerts) {
+                  pushNotif(`RecySense: ${s.name} mencapai 80%`, `${BIN_LABEL[k]} telah mencapai 80%. Armada pengangkut diberi tahu.`, "alert", "recysense");
+                }
+              }
+              setSyncAt(Date.now());
+            }, 6000);
+            return () => clearInterval(id);
+          }, []);
+
+          const deposit = ({ siteId, type, kg }) => {
+            const w = WASTE[type];
+            const pts = Math.round(kg * w.rate);
+            const site = sitesRef.current.find((s) => s.id === siteId);
+            const before = site.bins[w.bin];
+            const after = Math.min(100, before + Math.max(1, Math.round(kg * 0.6)));
+            setSites((l) => l.map((s) => (s.id === siteId ? { ...s, bins: { ...s.bins, [w.bin]: after } } : s)));
+            setSyncAt(Date.now());
+            setPoints((p) => p + pts);
+            setTotalEarned((t) => t + pts);
+            setTotalKg((t) => t + kg);
+            setMonthKg((m) => m + kg);
+            setCarbonReduced((c) => +(c + kg * 0.4).toFixed(1));
+            setWeekly((arr) => arr.map((v, i) => (i === TODAY_IDX ? +(v + kg).toFixed(1) : v)));
+            addHistory({ type: "setor", title: `Setor ${w.label} ${fmtKg(kg)} kg`, sub: site.name, points: pts });
+            if (after >= 80 && before < 80 && settingsRef.current.alerts) {
+              pushNotif(`RecySense: ${site.name} mencapai ${after}%`, `Wadah ${BIN_LABEL[w.bin]} melewati ambang 80%.`, "alert", "recysense");
+            }
+            showToast(`+${fmt(pts)} RecyPoin masuk ke saldo`);
+            return { pts, site, w, kg };
+          };
+
+          const schedulePickup = ({ types, kg, destType, dateLabel, slot, address, autoMode }) => {
+            const id = uid();
+            const label = types.map((t) => WASTE[t].label).join(", ");
+            const statusLabel = autoMode ? "Otomatis Berkala" : "Dijadwalkan";
+            setPickups((p) => [...p, { id, label, kg, destType, dateLabel, slot, address, status: statusLabel }]);
+            setHistory((h) => [
+              { id, type: "jemput", title: `RecyPick (${destType}): ${label} ${fmtKg(kg)} kg`, sub: `${dateLabel}, ${slot}`, time: nowLabel(), points: 0, status: statusLabel },
+              ...h,
+            ]);
+            pushNotif("Armada RecyPick dijadwalkan", `${destType} — ${dateLabel}, ${slot}.`, "info", "home");
+            setModal(null);
+            showToast("Penjemputan RecyPick berhasil dijadwalkan");
+
+            setTimeout(() => {
+              if (cancelledRef.current.has(id)) return;
+              setPickups((p) => p.map((x) => (x.id === id ? { ...x, status: "Dikonfirmasi" } : x)));
+              setHistory((h) => h.map((x) => (x.id === id ? { ...x, status: "Dikonfirmasi" } : x)));
+              if (settingsRef.current.reminders) {
+                pushNotif("Armada RecyPick dikonfirmasi", `Petugas menuju ${destType} pada jadwal ${slot}.`, "ok", "home");
+                showToast("Armada RecyPick mengonfirmasi jadwal jemput");
+              }
+            }, 5000);
+          };
+
+          const cancelPickup = (id) => {
+            cancelledRef.current.add(id);
+            setPickups((p) => p.filter((x) => x.id !== id));
+            setHistory((h) => h.map((x) => (x.id === id ? { ...x, status: "Dibatalkan" } : x)));
+            showToast("Jadwal RecyPick dibatalkan");
+          };
+
+          const redeem = (reward) => {
+            const code = `RGO-${rand4()}-${rand4()}`;
+            setPoints((p) => p - reward.cost);
+            setRedeemed((r) => [{ id: uid(), rewardId: reward.id, title: reward.title, code }, ...r]);
+            addHistory({ type: "tukar", title: `Tukar ${reward.title}`, sub: `Kode ${code}`, points: -reward.cost });
+            return code;
+          };
+
+          const copyCode = async (code) => {
+            try {
+              await navigator.clipboard.writeText(code);
+              showToast("Kode disalin");
+            } catch (e) {
+              showToast(`Salin manual: ${code}`);
+            }
+          };
+
+          const completeEdu = (mod) => {
+            if (eduDone.includes(mod.id)) return;
+            setEduDone((d) => [...d, mod.id]);
+            setPoints((p) => p + mod.pts);
+            setTotalEarned((t) => t + mod.pts);
+            addHistory({ type: "edu", title: `Selesai modul ${mod.title}`, sub: "RecyLearn", points: mod.pts });
+            showToast(`+${mod.pts} RecyPoin dari modul RecyLearn`);
+          };
+
+          const requestEmpty = (site) => {
+            setRequested((r) => [...r, site.id]);
+            pushNotif("Notifikasi 80% RecySense dikirim", `Armada RecyPick menuju ${site.name} melalui rute efisien.`, "info", "recysense");
+            showToast("Armada pengangkut diberangkatkan ke TPS");
+            setTimeout(() => {
+              setSites((l) => l.map((s) => (s.id === site.id ? { ...s, bins: { organik: 8, anorganik: 10, ewaste: 6 } } : s)));
+              setRequested((r) => r.filter((x) => x !== site.id));
+              setSyncAt(Date.now());
+              pushNotif(`${site.name} telah dikosongkan`, "Sensor RecySense membaca kapasitas kembali normal.", "ok", "recysense");
+              showToast(`${site.name} telah dikosongkan`);
+            }, 7000);
+          };
+
+          const confirmB2B = (product, orderKg, buyerName) => {
+            addHistory({
+              type: "setor",
+              title: `Kontrak B2B RecyMart: ${product.title} (${orderKg} kg)`,
+              sub: `${buyerName} • ${product.seller}`,
+              points: 150,
+            });
+            setPoints((p) => p + 150);
+            showToast(`Pesanan B2B ${orderKg} kg berhasil diajukan (+150 RecyPoin)`);
+          };
+
+          const addCarbonRecord = (trees, co2) => {
+            setTreesSaved((t) => t + trees);
+            setCarbonReduced((c) => +(c + co2).toFixed(1));
+            showToast(`RecyTrack diperbarui: +${trees} pohon & -${fmtKg(co2)} kg emisi CO2`);
+          };
+
+          const toggleHubCampaign = (cam) => {
+            if (joinedHub.includes(cam.id)) {
+              setJoinedHub((l) => l.filter((x) => x !== cam.id));
+              showToast("Pendaftaran relawan dibatalkan");
+            } else {
+              setJoinedHub((l) => [...l, cam.id]);
+              setPoints((p) => p + cam.pts);
+              addHistory({ type: "edu", title: `Relawan RecyHub: ${cam.title}`, sub: cam.area, points: cam.pts });
+              showToast(`Terdaftar sebagai relawan (+${cam.pts} RecyPoin)`);
+            }
+          };
+
+          const donateHub = (cf) => {
+            if (points < 200) {
+              showToast("Saldo RecyPoin belum cukup untuk donasi 200 poin");
+              return;
+            }
+            setPoints((p) => p - 200);
+            setCrowdfunds((list) =>
+              list.map((item) => (item.id === cf.id ? { ...item, raised: item.raised + 20000, donors: item.donors + 1 } : item))
+            );
+            addHistory({ type: "tukar", title: `Crowdfunding RecyHub: ${cf.title}`, sub: "Donasi 200 RecyPoin", points: -200 });
+            showToast("Donasi crowdfunding TPS desa berhasil dikirim");
+          };
+
+          const openPickup = (types = []) => setModal({ kind: "pickup", types });
+          const openScan = (siteId) => setModal({ kind: "scan", siteId: siteId || "mawar" });
+          const closeModal = () => setModal(null);
+
+          const run = (id) => {
+            if (id === "recypick" || id === "pickup") openPickup();
+            else if (id === "scan") openScan("mawar");
+            else setTab(id);
+          };
+
+          const unread = notifs.filter((n) => !n.read).length;
+          const goNotif = (n) => {
+            setNotifs((list) => list.map((x) => (x.id === n.id ? { ...x, read: true } : x)));
+            setModal(null);
+            if (n.go === "pickup") openPickup(["organik"]);
+            else if (n.go) setTab(n.go);
+          };
+
+          const c = {
+            user, firstName, avatarUrl, points, totalEarned, totalKg, monthKg, treesSaved, carbonReduced,
+            weekly, history, sites, syncAt, pickups, redeemed, eduDone, joinedHub, crowdfunds,
+            settings, requested, selectedSite,
+            setTab, setSelectedSite, setSettings, setUser,
+            openPickup, openScan, run, requestEmpty, cancelPickup, showToast, onReset,
+            addCarbonRecord, toggleHubCampaign, donateHub,
+            openReward: (reward) => setModal({ kind: "reward", reward }),
+            openEdu: (mod) => setModal({ kind: "edu", id: mod.id }),
+            openB2B: (product) => setModal({ kind: "b2b", product }),
+          };
+
+          const page =
+            tab === "home" ? <HomePage c={c} /> :
+            tab === "recysense" ? <MapPage c={c} /> :
+            tab === "recymart" ? <RecyMartPage c={c} /> :
+            tab === "recytrack" ? <RecyTrackPage c={c} /> :
+            tab === "recyhub" ? <RecyHubPage c={c} /> :
+            tab === "history" ? <HistoryPage c={c} /> :
+            tab === "profile" ? <ProfilePage c={c} /> :
+            tab === "recypoin" ? <RewardsPage c={c} /> :
+            <EduPage c={c} />;
+
+          const eduMod = modal && modal.kind === "edu" ? EDU_MODULES.find((m) => m.id === modal.id) : null;
+
+          return (
+            <div className="min-h-screen bg-white text-slate-900 lg:bg-slate-50">
+              <style>{GLOBAL_CSS}</style>
+
+              <Sidebar tab={tab} user={user} avatarUrl={avatarUrl} totalEarned={totalEarned} onTab={setTab} onRun={run} />
+
+              <div className="lg:pl-64">
+                <div className="mx-auto w-full max-w-xl px-5 pb-32 lg:max-w-6xl lg:px-10 lg:pb-14">
+                  <Header
+                    tab={tab}
+                    firstName={firstName}
+                    name={user.name}
+                    avatarUrl={avatarUrl}
+                    unread={unread}
+                    onBell={() => setModal({ kind: "notif" })}
+                    onHistory={() => setTab("history")}
+                    onProfile={() => setTab("profile")}
+                    onBack={() => setTab("home")}
+                  />
+                  <main className="mt-6 lg:mt-8">{page}</main>
+                </div>
+              </div>
+
+              <BottomNav tab={tab} onTab={setTab} />
+
+              {modal && modal.kind === "pickup" && (
+                <PickupModal initialTypes={modal.types} address={user.address} onSubmit={schedulePickup} onClose={closeModal} />
+              )}
+              {modal && modal.kind === "scan" && (
+                <ScanModal sites={sites} initialSiteId={modal.siteId} onDeposit={deposit} onClose={closeModal} />
+              )}
+              {modal && modal.kind === "reward" && (
+                <RewardModal reward={modal.reward} points={points} onConfirm={redeem} onCopy={copyCode} onClose={closeModal} />
+              )}
+              {modal && modal.kind === "b2b" && (
+                <B2BModal product={modal.product} onConfirm={confirmB2B} onClose={closeModal} />
+              )}
+              {eduMod && <EduModal mod={eduMod} done={eduDone.includes(eduMod.id)} onComplete={completeEdu} onClose={closeModal} />}
+              {modal && modal.kind === "notif" && (
+                <NotifSheet
+                  notifs={notifs}
+                  onReadAll={() => setNotifs((l) => l.map((n) => ({ ...n, read: true })))}
+                  onGo={goNotif}
+                  onClose={closeModal}
+                />
+              )}
+
+              <Toasts items={toasts} />
+            </div>
+          );
+        }
+
+        function RecyGoDashboard({ avatarUrl = null }) {
+          const [run, setRun] = useState(0);
+          return <Dashboard key={run} avatarUrl={avatarUrl} onReset={() => setRun((r) => r + 1)} />;
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<RecyGoDashboard />);
+    </script>
+</body>
+</html>
